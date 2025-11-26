@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 
+//класс пользователя
 namespace Quiz.Models
 {
     public class User
