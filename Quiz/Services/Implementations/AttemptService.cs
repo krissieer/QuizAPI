@@ -1,6 +1,7 @@
 ﻿using Quiz.Models;
 using Quiz.Repositories.Interfaces;
 using Quiz.Services.Interfaces;
+using Quiz.DTOs.Attempt;
 
 namespace Quiz.Services.Implementations;
 
@@ -63,7 +64,7 @@ public class AttemptService : IAttemptService
         return attempt;
     }
 
-    public async Task<Attempt> FinishAttemptAsync(int attemptId, IEnumerable<Answer> answers)
+    public async Task<Attempt> FinishAttemptAsync(int attemptId, IEnumerable<AnswerFinishDto> answerDtos)
     {
         var attempt = await _attemptRepository.GetByIdAsync(attemptId);
         if (attempt == null)
@@ -72,39 +73,45 @@ public class AttemptService : IAttemptService
         if (attempt.CompletedAt != DateTime.MinValue)
             throw new Exception("Attempt already completed");
 
-        // Загружаем все вопросы викторины
         var questions = await _questionRepository.GetQuestionsByQuizAsync(attempt.QuizId);
         var questionDict = questions.ToDictionary(q => q.Id);
 
         int correctCount = 0;
+        var answersToSave = new List<Answer>();
 
-        foreach (var answer in answers)
+        foreach (var dto in answerDtos)
         {
-            if (!questionDict.TryGetValue(answer.QuestionId, out var question))
-                throw new Exception($"Question {answer.QuestionId} does not belong to quiz");
+            if (!questionDict.TryGetValue(dto.QuestionId, out var question))
+                throw new Exception($"Question {dto.QuestionId} does not belong to quiz");
 
-            answer.AttemptId = attemptId;
-
-            var userAnswers = answer.UserAnswer?
+            var userAnswers = dto.UserAnswer?
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
-                .ToList()
-                ?? new List<string>();
+                .ToList() ?? new List<string>();
 
-            bool isCorrect =
-                question.CorrectAnswer != null &&
-                question.CorrectAnswer.Any() &&
-                question.CorrectAnswer.SequenceEqual(userAnswers);
+            var correctAnswers = question.CorrectAnswer?
+                .Select(x => x.Trim())
+                .ToList() ?? new List<string>();
 
-            answer.IsCorrect = isCorrect;
+            bool isCorrect = correctAnswers.Count == userAnswers.Count &&
+                            correctAnswers.All(ca => userAnswers.Contains(ca)) &&
+                            userAnswers.All(ua => correctAnswers.Contains(ua));
 
-            if (isCorrect)
-                correctCount++;
+            var answer = new Answer
+            {
+                AttemptId = attemptId,
+                QuestionId = dto.QuestionId,
+                UserAnswer = dto.UserAnswer,
+                IsCorrect = isCorrect
+            };
 
-            await _answerRepository.AddAsync(answer);
+            answersToSave.Add(answer);
+            if (isCorrect) correctCount++;
         }
 
-        // Подсчёт результата
+        foreach (var answer in answersToSave)
+            await _answerRepository.AddAsync(answer);
+
         attempt.Score = correctCount;
         attempt.CompletedAt = DateTime.UtcNow;
 
