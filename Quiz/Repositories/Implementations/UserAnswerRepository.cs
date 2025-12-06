@@ -16,6 +16,9 @@ public class UserAnswerRepository : IUserAnswerRepository
     public async Task<UserAnswer?> GetByIdAsync(int id)
     {
         return await _context.UserAnswers
+            .Include(ua => ua.Attempt) 
+            .Include(ua => ua.Question) 
+            .Include(ua => ua.ChosenOption) 
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
@@ -46,6 +49,8 @@ public class UserAnswerRepository : IUserAnswerRepository
     {
         return await _context.UserAnswers
             .Where(a => a.AttemptId == attemptId)
+            .Include(ua => ua.Question)
+            .Include(ua => ua.ChosenOption)
             .ToListAsync();
     }
 }

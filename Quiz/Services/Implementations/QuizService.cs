@@ -19,6 +19,11 @@ public class QuizService : IQuizService
     {
         return await _quizRepository.GetByIdAsync(id);
     }
+    
+    public async Task<Models.Quiz?> GetByIdWithDetailsAsync(int id)
+    {
+        return await _quizRepository.GetByIdWithDetailsAsync(id);
+    }
 
     public async Task<IEnumerable<Models.Quiz>> GetAllPublicAsync()
     {
@@ -51,9 +56,11 @@ public class QuizService : IQuizService
         existing.Title = quiz.Title;
         existing.Description = quiz.Description;
         existing.CategoryId = quiz.CategoryId;
-        //existing.Language = quiz.Language;
         existing.isPublic = quiz.isPublic;
         existing.TimeLimit = quiz.TimeLimit;
+        
+        if (existing.AuthorId != quiz.AuthorId)
+             throw new Exception("Cannot change quiz author");
 
         await _quizRepository.UpdateAsync(existing);
         return true;
@@ -65,7 +72,7 @@ public class QuizService : IQuizService
         if (existing == null)
             return false;
 
-        await _quizRepository.DeleteAsync(existing);
+        await _quizRepository.DeleteAsync(id);
         return true;
     }
 }

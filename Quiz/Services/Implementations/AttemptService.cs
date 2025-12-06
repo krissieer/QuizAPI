@@ -1,6 +1,5 @@
 ﻿using Quiz.DTOs.Attempt;
 using Quiz.Models;
-using Quiz.Repositories.Implementations;
 using Quiz.Repositories.Interfaces;
 using Quiz.Services.Interfaces;
 
@@ -9,60 +8,54 @@ namespace Quiz.Services.Implementations;
 public class AttemptService : IAttemptService
 {
     private readonly IAttemptRepository _attemptRepository;
-    private readonly IUserRepository _userRepository;
     private readonly IQuizRepository _quizRepository;
     private readonly IQuestionRepository _questionRepository;
+    private readonly IOptionRepository _optionRepository;
     private readonly IUserAnswerRepository _userAnswerRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AttemptService(
         IAttemptRepository attemptRepository,
-        IUserRepository userRepository,
         IQuizRepository quizRepository,
         IQuestionRepository questionRepository,
+        IOptionRepository optionRepository,
         IUserAnswerRepository userAnswerRepository,
         IHttpContextAccessor httpContextAccessor)
     {
         _attemptRepository = attemptRepository;
-        _userRepository = userRepository;
         _quizRepository = quizRepository;
         _questionRepository = questionRepository;
+        _optionRepository = optionRepository;
         _userAnswerRepository = userAnswerRepository;
         _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Attempt?> GetByIdAsync(int id)
-    {
-        return await _attemptRepository.GetByIdAsync(id);
-    }
+        => await _attemptRepository.GetByIdWithDetailsAsync(id);
 
     public async Task<IEnumerable<Attempt>> GetByUserIdAsync(int userId)
-    {
-        return await _attemptRepository.GetAttemptsByUserAsync(userId);
-    }
+        => await _attemptRepository.GetAttemptsByUserAsync(userId);
 
     public async Task<IEnumerable<Attempt>> GetByQuizIdAsync(int quizId)
-    {
-        return await _attemptRepository.GetAttemptsByQuizAsync(quizId);
-    }
+        => await _attemptRepository.GetAttemptsByQuizAsync(quizId);
 
     public async Task<Attempt> StartAttemptAsync(int quizId)
     {
-        var ctx = _httpContextAccessor.HttpContext!;
-        var userId = ctx.GetUserId();          // если авторизован — вернет число
-        var guestId = ctx.GetGuestSessionId(); // если гость — вернет строку
+        var quiz = await _quizRepository.GetByIdAsync(quizId)
+            ?? throw new KeyNotFoundException("Quiz not found");
 
-        var quiz = await _quizRepository.GetByIdAsync(quizId);
-        if (quiz == null)
-            throw new Exception("Quiz not found");
+        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("userId")?.Value;
+        int? userId = int.TryParse(userIdClaim, out var uid) ? uid : null;
+        var guestId = _httpContextAccessor.HttpContext?.Items["GuestSessionId"]?.ToString();
 
         var attempt = new Attempt
         {
-            UserId = userId,
             QuizId = quizId,
+            UserId = userId,
             GuestSessionId = userId == null ? guestId : null,
-            CompletedAt = DateTime.MinValue,
-            Score = 0
+            Score = 0,
+            TimeSpent = TimeSpan.Zero,
+            CompletedAt = DateTime.UtcNow // будет перезаписано при финише
         };
 
         await _attemptRepository.AddAsync(attempt);
@@ -71,65 +64,63 @@ public class AttemptService : IAttemptService
 
     public async Task<Attempt> FinishAttemptAsync(int attemptId, IEnumerable<AnswerFinishDto> answerDtos)
     {
-        var attempt = await _attemptRepository.GetByIdAsync(attemptId);
-        if (attempt == null)
-            throw new Exception("Attempt not found");
+        var attempt = await _attemptRepository.GetByIdAsync(attemptId)
+            ?? throw new KeyNotFoundException("Attempt not found");
 
-        if (attempt.CompletedAt != DateTime.MinValue)
-            throw new Exception("Attempt already completed");
+        if (attempt.CompletedAt != DateTime.MinValue && attempt.CompletedAt != default)
+            throw new InvalidOperationException("Attempt already completed");
 
-        var questions = await _questionRepository.GetQuestionsByQuizAsync(attempt.QuizId);
+        var questions = await _questionRepository.GetQuestionsWithOptionsByQuizAsync(attempt.QuizId);
         var questionDict = questions.ToDictionary(q => q.Id);
 
         int correctCount = 0;
-        var answersToSave = new List<UserAnswer>();
+        var userAnswersToSave = new List<UserAnswer>();
 
         foreach (var dto in answerDtos)
         {
             if (!questionDict.TryGetValue(dto.QuestionId, out var question))
-                throw new Exception($"Question {dto.QuestionId} does not belong to quiz");
+                throw new InvalidOperationException($"Question {dto.QuestionId} not found in quiz");
 
-            var userAnswers = dto.UserAnswer?
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.Trim())
-                .ToList() ?? new List<string>();
+            var selectedOptionIds = dto.SelectedOptionIds?.ToHashSet() ?? new HashSet<int>();
 
-            //var correctAnswers = question.CorrectAnswer?
-            //    .Select(x => x.Trim())
-            //    .ToList() ?? new List<string>();
+            // Получаем все правильные опции для вопроса
+            var correctOptionIds = question.Options
+                .Where(o => o.IsCorrect)
+                .Select(o => o.Id)
+                .ToHashSet();
 
-            //bool isCorrect = correctAnswers.Count == userAnswers.Count &&
-            //                correctAnswers.All(ca => userAnswers.Contains(ca)) &&
-            //                userAnswers.All(ua => correctAnswers.Contains(ua));
+            bool isCorrect = selectedOptionIds.SetEquals(correctOptionIds);
 
-            var answer = new UserAnswer
+            if (isCorrect) correctCount++;
+
+            // Сохраняем каждый выбранный вариант (для Multiple — может быть несколько)
+            foreach (var optionId in selectedOptionIds)
             {
-                AttemptId = attemptId,
-                QuestionId = dto.QuestionId,
-                //UserAnswer = dto.UserAnswer,
-                //IsCorrect = isCorrect
-            };
-
-            answersToSave.Add(answer);
-            //if (isCorrect) correctCount++;
+                userAnswersToSave.Add(new UserAnswer
+                {
+                    AttemptId = attemptId,
+                    QuestionId = dto.QuestionId,
+                    ChosenOptionId = optionId
+                });
+            }
         }
 
-        foreach (var answer in answersToSave)
-            await _userAnswerRepository.AddAsync(answer);
+        // Сохраняем ответы
+        foreach (var ua in userAnswersToSave)
+            await _userAnswerRepository.AddAsync(ua);
 
+        // Обновляем попытку
         attempt.Score = correctCount;
+        attempt.TimeSpent = DateTime.UtcNow - attempt.CompletedAt; // предполагаем, что при старте записали время
         attempt.CompletedAt = DateTime.UtcNow;
 
         await _attemptRepository.UpdateAsync(attempt);
+
         return attempt;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var attempt = await _attemptRepository.GetByIdAsync(id);
-        if (attempt == null)
-            return false;
-
         await _attemptRepository.DeleteAsync(id);
         return true;
     }

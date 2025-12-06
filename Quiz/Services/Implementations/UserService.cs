@@ -34,7 +34,7 @@ public class UserService : IUserService
     {
         var existing = await _userRepository.GetByUsernameAsync(username);
         if (existing != null)
-            throw new Exception("User with this username already exists");
+            return string.Empty;
 
         var hashedPassword = PasswordHasher.HashPassword(password);
 
@@ -68,7 +68,7 @@ public class UserService : IUserService
         if (user == null)
             return false;
 
-        await _userRepository.DeleteAsync(user);
+        await _userRepository.DeleteAsync(id);
         return true;
     }
 

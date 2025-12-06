@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Quiz.Models;
 using Quiz.Repositories.Interfaces;
 
@@ -16,21 +16,25 @@ public class QuizRepository : IQuizRepository
     public async Task<Models.Quiz?> GetByIdAsync(int id)
     {
         return await _context.Quizzes
-            .Include(q => q.Questions)
             .FirstOrDefaultAsync(q => q.Id == id);
     }
 
     public async Task<IEnumerable<Models.Quiz>> GetPublicQuizzesAsync()
     {
+        // Добавим Author и Category для отображения в списке
         return await _context.Quizzes
             .Where(q => q.isPublic)
+            .Include(q => q.Author)
+            .Include(q => q.Category)
             .ToListAsync();
     }
 
     public async Task<IEnumerable<Models.Quiz>> GetQuizzesByAuthorAsync(int authorId)
     {
+        // Category для отображения
         return await _context.Quizzes
             .Where(q => q.AuthorId == authorId)
+            .Include(q => q.Category)
             .ToListAsync();
     }
 
@@ -46,9 +50,26 @@ public class QuizRepository : IQuizRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(Models.Quiz quiz)
+    public async Task<Models.Quiz?> GetByIdWithDetailsAsync(int id)
     {
-        _context.Quizzes.Remove(quiz);
-        await _context.SaveChangesAsync();
+        // Возвращает викторину со всеми деталями: автор, категория, вопросы, варианты и попытки.
+        return await _context.Quizzes
+            .Include(q => q.Author)
+            .Include(q => q.Category)
+            .Include(q => q.Questions)
+                .ThenInclude(q => q.Options)
+            .Include(q => q.Attempts)
+            .FirstOrDefaultAsync(q => q.Id == id);
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var quiz = await _context.Quizzes.FirstOrDefaultAsync(q => q.Id == id);
+
+        if (quiz != null)
+        {
+            _context.Quizzes.Remove(quiz);
+            await _context.SaveChangesAsync();
+        }
     }
 }

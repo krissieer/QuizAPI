@@ -34,7 +34,6 @@ public class QuizController : ControllerBase
             Title = q.Title,
             Description = q.Description,
             CategoryId = q.CategoryId,
-            //Language = q.Language,
             IsPublic = q.isPublic,
             AuthorId = q.AuthorId,
             TimeLimit = q.TimeLimit,
@@ -58,7 +57,6 @@ public class QuizController : ControllerBase
             Title = quiz.Title,
             Description = quiz.Description,
             CategoryId = quiz.CategoryId,
-            //Language = quiz.Language,
             IsPublic = quiz.isPublic,
             AuthorId = quiz.AuthorId,
             TimeLimit = quiz.TimeLimit,
@@ -83,7 +81,6 @@ public class QuizController : ControllerBase
             Title = q.Title,
             Description = q.Description,
             CategoryId = q.CategoryId,
-            //Language = q.Language,
             IsPublic = q.isPublic,
             AuthorId = q.AuthorId,
             TimeLimit = q.TimeLimit,
@@ -113,7 +110,6 @@ public class QuizController : ControllerBase
                 Title = dto.Title,
                 Description = dto.Description,
                 CategoryId = dto.CategoryId,
-                //Language = dto.Language,
                 isPublic = dto.IsPublic,
                 AuthorId = authorizedUserId,
                 TimeLimit = dto.TimeLimit,
@@ -128,10 +124,9 @@ public class QuizController : ControllerBase
                 Title = created.Title,
                 Description = created.Description,
                 CategoryId = created.CategoryId,
-                //Language = created.Language,
                 IsPublic = created.isPublic,
                 AuthorId = created.AuthorId,
-                TimeLimit= created.TimeLimit,
+                TimeLimit = created.TimeLimit,
                 CreatedAt = created.CreatedAt
             });
         }
@@ -153,7 +148,6 @@ public class QuizController : ControllerBase
         existing.Title = dto.Title ?? existing.Title;
         existing.Description = dto.Description ?? existing.Description;
         existing.CategoryId = dto.CategoryId ?? existing.CategoryId;
-        //existing.Language = dto.Language ?? existing.Language;
         existing.isPublic = dto.IsPublic ?? existing.isPublic;
         existing.TimeLimit = dto.TimeLimit ?? existing.TimeLimit;
 

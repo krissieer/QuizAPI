@@ -19,6 +19,22 @@ public class QuestionController : ControllerBase
         _questionService = questionService;
     }
 
+    private QuestionDto MapToQuestionDto(Question q)
+    {
+        return new QuestionDto
+        {
+            Id = q.Id,
+            Text = q.Text,
+            Type = q.Type,
+            QuizId = q.QuizId,
+            Options = q.Options.Select(o => new OptionDto
+            {
+                Id = o.Id,
+                Text = o.Text,
+            }).ToList()
+        };
+    }
+
     // GET: api/question/{id}
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
@@ -27,15 +43,7 @@ public class QuestionController : ControllerBase
         if (q == null)
             return NotFound($"Question with ID {id} not found.");
 
-        return Ok(new QuestionDto
-        {
-            Id = q.Id,
-            Text = q.Text,
-            Type = q.Type,
-            //Options = q.Options,
-            //CorrectAnswer = q.CorrectAnswer,
-            QuizId = q.QuizId
-        });
+        return Ok(MapToQuestionDto(q));
     }
 
     // GET: api/question/by-quiz/{quizId}
@@ -47,15 +55,7 @@ public class QuestionController : ControllerBase
         if (!questions.Any())
             return Ok(new List<QuestionDto>());
 
-        var result = questions.Select(q => new QuestionDto
-        {
-            Id = q.Id,
-            Text = q.Text,
-            Type = q.Type,
-            //Options = q.Options,
-            //CorrectAnswer = q.CorrectAnswer,
-            QuizId = q.QuizId
-        });
+        var result = questions.Select(MapToQuestionDto);
 
         return Ok(result);
     }
@@ -75,25 +75,19 @@ public class QuestionController : ControllerBase
                 Text = dto.Text,
                 QuizId = dto.QuizId,
                 Type = dto.Type,
-                //Options = dto.Options ?? new List<string>(),
-                //CorrectAnswer = dto.CorrectAnswer ?? new List<string>()
             };
 
-            var created = await _questionService.CreateAsync(question);
+            // Разделяем опции из DTO в два списка для сервиса
+            var optionTexts = dto.Options.Select(o => o.Text).ToList();
+            var isCorrectFlags = dto.Options.Select(o => o.IsCorrect).ToList();
 
-            return Ok(new QuestionDto
-            {
-                Id = created.Id,
-                Text = created.Text,
-                Type = created.Type,
-                //Options = created.Options,
-                //CorrectAnswer = created.CorrectAnswer,
-                QuizId = created.QuizId
-            });
+            var created = await _questionService.CreateAsync(question, optionTexts, isCorrectFlags);
+
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToQuestionDto(created));
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -108,14 +102,25 @@ public class QuestionController : ControllerBase
 
         existing.Text = dto.Text ?? existing.Text;
         existing.Type = dto.Type ?? existing.Type;
-        //existing.Options = dto.Options ?? existing.Options;
-        //existing.CorrectAnswer = dto.CorrectAnswer ?? existing.CorrectAnswer;
+        
+        List<string>? optionTexts = null;
+        List<bool>? isCorrectFlags = null;
 
-        var success = await _questionService.UpdateAsync(existing);
+        if (dto.Options != null)
+        {
+            // Разделяем опции из DTO в два списка для сервиса
+            optionTexts = dto.Options.Select(o => o.Text).ToList();
+            isCorrectFlags = dto.Options.Select(o => o.IsCorrect).ToList();
+        }
+
+        var success = await _questionService.UpdateAsync(existing, optionTexts, isCorrectFlags);
         if (!success)
             return StatusCode(500, "Failed to update question.");
 
-        return Ok("Updated");
+        // Получаем обновленный объект с опциями для ответа
+        var updated = await _questionService.GetByIdAsync(id);
+
+        return Ok(MapToQuestionDto(updated!));
     }
 
     // DELETE: api/question/{id}
@@ -123,14 +128,10 @@ public class QuestionController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
-        var question = await _questionService.GetByIdAsync(id);
-        if (question == null)
-            return NotFound($"Question with ID {id} not found.");
-
         var success = await _questionService.DeleteAsync(id);
+        
         if (!success)
-            return StatusCode(500, "Failed to delete question due to server error.");
-
+            return NotFound($"Question with ID {id} not found or failed to delete."); 
         return Ok("Deleted");
     }
 }

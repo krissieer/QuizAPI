@@ -18,6 +18,35 @@ public class AttemptController : ControllerBase
         _attemptService = attemptService;
     }
 
+    private AttemptDto MapToAttemptDto(Attempt attempt)
+    {
+         return new AttemptDto
+            {
+                Id = attempt.Id,
+                Score = attempt.Score,
+                TimeSpent = attempt.TimeSpent,
+                CompletedAt = attempt.CompletedAt,
+                UserId = attempt.UserId,
+                GuestSessionId = attempt.UserId == null ? attempt.GuestSessionId : null,
+                QuizId = attempt.QuizId
+            };
+    }
+    
+    private AttemptResultDto MapToAttemptResultDto(Attempt attempt)
+    {
+         return new AttemptResultDto
+            {
+                Id = attempt.Id,
+                Score = attempt.Score,
+                TimeSpent = attempt.TimeSpent,
+                CompletedAt = attempt.CompletedAt,
+                UserId = attempt.UserId,
+                GuestSessionId = attempt.UserId == null ? attempt.GuestSessionId : null,
+                QuizId = attempt.QuizId,
+                CorrectAnswersCount = attempt.Score //количество правильных ответов
+            };
+    }
+
     // POST: api/attempt/quiz-sessions/{quizId}/start
     [HttpPost("quiz-sessions/{quizId}/start")]
     public async Task<IActionResult> StartAttempt(int quizId)
@@ -28,25 +57,16 @@ public class AttemptController : ControllerBase
         try
         {
             var attempt = await _attemptService.StartAttemptAsync(quizId);
-            return Ok(new AttemptDto
-            {
-                Id = attempt.Id,
-                Score = attempt.Score,
-                TimeSpent = attempt.TimeSpent,
-                CompletedAt = attempt.CompletedAt,
-                UserId = attempt.UserId,
-                GuestSessionId = attempt.UserId == null ? attempt.GuestSessionId : null,
-                QuizId = attempt.QuizId
-            });
+            return Ok(MapToAttemptDto(attempt));
         }
         catch (Exception ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new { error = ex.Message });
         }
     }
 
-    // POST: api/attempt/quiz-sessions/{quizId}/stop
-    [HttpPost("quiz-sessions/stop")]
+    // POST: api/attempt/quiz-sessions/stop
+    [HttpPost("quiz-sessions/stop")] 
     public async Task<IActionResult> FinishAttempt([FromBody] FinishAttemptDto dto)
     {
         if (!ModelState.IsValid)
@@ -54,18 +74,18 @@ public class AttemptController : ControllerBase
 
         try
         {
-            var attempt = await _attemptService.FinishAttemptAsync(dto.AttemptId, dto.Answers);
-            return Ok(new AttemptResultDto
-            {
-                Id = attempt.Id,
-                Score = attempt.Score,
-                TimeSpent = attempt.TimeSpent,
-                CompletedAt = attempt.CompletedAt,
-                UserId = attempt.UserId,
-                GuestSessionId = attempt.UserId == null ? attempt.GuestSessionId : null,
-                QuizId = attempt.QuizId,
-                CorrectAnswersCount = attempt.Score
-            });
+            // Используем новый FinishAttemptDto, содержащий коллекцию SelectedOptionIds
+            var attempt = await _attemptService.FinishAttemptAsync(dto.AttemptId, dto.Answers); 
+            
+            return Ok(MapToAttemptResultDto(attempt));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+             return Conflict(new { error = ex.Message });
         }
         catch (Exception ex)
         {
@@ -81,16 +101,7 @@ public class AttemptController : ControllerBase
         if (attempt == null)
             return NotFound($"Attempt with ID {id} not found.");
 
-        return Ok(new AttemptDto
-        {
-            Id = attempt.Id,
-            Score = attempt.Score,
-            TimeSpent = attempt.TimeSpent,
-            CompletedAt = attempt.CompletedAt,
-            UserId = attempt.UserId,
-            GuestSessionId = attempt.UserId == null ? attempt.GuestSessionId : null,
-            QuizId = attempt.QuizId
-        });
+        return Ok(MapToAttemptDto(attempt));
     }
 
     // GET: api/attempt/by-user/{userId}
@@ -102,16 +113,7 @@ public class AttemptController : ControllerBase
         if (!attempts.Any())
             return Ok(new List<AttemptDto>());
 
-        var result = attempts.Select(a => new AttemptDto
-        {
-            Id = a.Id,
-            Score = a.Score,
-            TimeSpent = a.TimeSpent,
-            CompletedAt = a.CompletedAt,
-            UserId = a.UserId,
-            GuestSessionId = a.UserId == null ? a.GuestSessionId : null,
-            QuizId = a.QuizId
-        });
+        var result = attempts.Select(MapToAttemptDto);
 
         return Ok(result);
     }
@@ -125,16 +127,7 @@ public class AttemptController : ControllerBase
         if (!attempts.Any())
             return Ok(new List<AttemptDto>());
 
-        var result = attempts.Select(a => new AttemptDto
-        {
-            Id = a.Id,
-            Score = a.Score,
-            TimeSpent = a.TimeSpent,
-            CompletedAt = a.CompletedAt,
-            UserId = a.UserId,
-            GuestSessionId = a.UserId == null ? a.GuestSessionId : null,
-            QuizId = a.QuizId
-        });
+        var result = attempts.Select(MapToAttemptDto);
 
         return Ok(result);
     }

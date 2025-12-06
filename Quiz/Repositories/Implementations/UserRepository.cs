@@ -17,7 +17,9 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .Include(u => u.Quizzes)
+                .ThenInclude(q => q.Category)
             .Include(u => u.Attempts)
+                .ThenInclude(a => a.Quiz)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
@@ -44,9 +46,13 @@ public class UserRepository : IUserRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(User user)
+    public async Task DeleteAsync(int id)
     {
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        var user = await _context.Users.FindAsync(id);
+        if (user != null)
+        {
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+        }
     }
 }

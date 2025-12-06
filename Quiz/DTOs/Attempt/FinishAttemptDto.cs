@@ -8,5 +8,5 @@ public class FinishAttemptDto
     public int AttemptId { get; set; }
 
     [Required]
-    public List<AnswerFinishDto> Answers { get; set; } = new();
+    public IEnumerable<AnswerFinishDto> Answers { get; set; } = new List<AnswerFinishDto>();
 }

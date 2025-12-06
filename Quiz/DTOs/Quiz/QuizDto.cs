@@ -5,7 +5,6 @@ public class QuizDto
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int? CategoryId { get; set; }
-    //public string Language { get; set; } = "Russian";
     public bool IsPublic { get; set; }
     public int AuthorId { get; set; }
     public TimeSpan? TimeLimit { get; set; }
