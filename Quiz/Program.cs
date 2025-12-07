@@ -58,12 +58,16 @@ public class Program
         builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
         builder.Services.AddScoped<IAttemptRepository, AttemptRepository>();
         builder.Services.AddScoped<IUserAnswerRepository, UserAnswerRepository>();
+        builder.Services.AddScoped<IOptionRepository, OptionRepository>();
+        builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IQuizService, QuizService>();
         builder.Services.AddScoped<IQuestionService, QuestionService>();
         builder.Services.AddScoped<IAttemptService, AttemptService>();
         builder.Services.AddScoped<IUserAnswerService, UserAnswerService>();
+        builder.Services.AddScoped<IOptionService, OptionService>();
+        builder.Services.AddScoped<ICategoryService, CategoryService>();
 
         builder.Services.AddHttpContextAccessor();
 
@@ -93,9 +97,10 @@ public class Program
         }
         app.UseHttpsRedirection();
         app.UseRouting();
-        app.UseMiddleware<GuestSessionMiddleware>();
+        
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseMiddleware<GuestSessionMiddleware>();
         app.MapControllers();
 
         app.Run();

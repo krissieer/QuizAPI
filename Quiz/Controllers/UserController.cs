@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Quiz.DTOs.Attempt;
+using Quiz.DTOs.Quiz;
+using Quiz.DTOs.User;
 using Quiz.Models;
 using Quiz.Services.Implementations;
 using Quiz.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using Quiz.DTOs.User;
 
 namespace Quiz.Controllers;
 
@@ -15,10 +17,14 @@ namespace Quiz.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IQuizService _quizService;
+    private readonly IAttemptService _attemptService;
 
-    public UserController(IUserService userService) 
-    { 
-        _userService = userService; 
+    public UserController(IUserService userService, IQuizService quizService, IAttemptService attemptService)
+    {
+        _userService = userService;
+        _quizService = quizService;
+        _attemptService = attemptService;
     }
 
     [HttpGet]
@@ -69,6 +75,52 @@ public class UserController : ControllerBase
             Name = user.Username
         };
 
+        return Ok(result);
+    }
+
+    // GET: api/user/{userId}/quizzes
+    [HttpGet("{userId}/quizzes")]
+    public async Task<IActionResult> GetQuizzes(int userId)
+    {
+        var quizzes = await _quizService.GetByAuthorAsync(userId);
+
+        if (!quizzes.Any())
+            return Ok(new List<QuizDto>());
+
+        var result = quizzes.Select(q => new QuizDto
+        {
+            Id = q.Id,
+            Title = q.Title,
+            Description = q.Description,
+            CategoryId = q.CategoryId,
+            IsPublic = q.isPublic,
+            AuthorId = q.AuthorId,
+            TimeLimit = q.TimeLimit,
+            CreatedAt = q.CreatedAt
+        });
+
+        return Ok(result);
+    }
+
+    // GET: api/user/{userId}/attempts
+    [HttpGet("{userId}/attempts")]
+    public async Task<IActionResult> GetAttempts(int userId)
+    {
+        var attempts = await _attemptService.GetByUserIdAsync(userId);
+
+        if (!attempts.Any())
+            return Ok(new List<AttemptDto>());
+
+        var result = attempts.Select(a => new AttemptDto
+        {
+            Id = a.Id,
+            Score = a.Score,
+            TimeSpent = a.TimeSpent,
+            CompletedAt = a.CompletedAt,
+            UserId = a.UserId,
+            GuestSessionId = a.UserId == null ? a.GuestSessionId : null,
+            QuizId = a.QuizId
+        });
         return Ok(result);
     }
 

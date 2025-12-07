@@ -20,6 +20,13 @@ public class CategoryRepository : ICategoryRepository
             .FirstOrDefaultAsync(c => c.Id == id);
     }
 
+    public async Task<Category?> GetByNameAsync(string name)
+    {
+        return await _context.Categories
+            .Include(c => c.Quizzes)
+            .FirstOrDefaultAsync(c => c.Name == name);
+    }
+
     public async Task<IEnumerable<Category>> GetAllAsync()
     {
         return await _context.Categories.ToListAsync();

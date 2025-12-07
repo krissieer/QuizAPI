@@ -2,6 +2,7 @@
 using Quiz.Models;
 using Quiz.Repositories.Interfaces;
 using Quiz.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Quiz.Services.Implementations;
 
@@ -44,7 +45,7 @@ public class AttemptService : IAttemptService
         var quiz = await _quizRepository.GetByIdAsync(quizId)
             ?? throw new KeyNotFoundException("Quiz not found");
 
-        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("userId")?.Value;
+        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int? userId = int.TryParse(userIdClaim, out var uid) ? uid : null;
         var guestId = _httpContextAccessor.HttpContext?.Items["GuestSessionId"]?.ToString();
 
@@ -55,7 +56,7 @@ public class AttemptService : IAttemptService
             GuestSessionId = userId == null ? guestId : null,
             Score = 0,
             TimeSpent = TimeSpan.Zero,
-            CompletedAt = DateTime.UtcNow // будет перезаписано при финише
+            CompletedAt = DateTime.UtcNow
         };
 
         await _attemptRepository.AddAsync(attempt);
@@ -67,7 +68,7 @@ public class AttemptService : IAttemptService
         var attempt = await _attemptRepository.GetByIdAsync(attemptId)
             ?? throw new KeyNotFoundException("Attempt not found");
 
-        if (attempt.CompletedAt != DateTime.MinValue && attempt.CompletedAt != default)
+        if (attempt.TimeSpent != TimeSpan.Zero)
             throw new InvalidOperationException("Attempt already completed");
 
         var questions = await _questionRepository.GetQuestionsWithOptionsByQuizAsync(attempt.QuizId);
@@ -83,7 +84,7 @@ public class AttemptService : IAttemptService
 
             var selectedOptionIds = dto.SelectedOptionIds?.ToHashSet() ?? new HashSet<int>();
 
-            // Получаем все правильные опции для вопроса
+            // Получаем все правильные варианты ответа для вопроса
             var correctOptionIds = question.Options
                 .Where(o => o.IsCorrect)
                 .Select(o => o.Id)
@@ -111,11 +112,10 @@ public class AttemptService : IAttemptService
 
         // Обновляем попытку
         attempt.Score = correctCount;
-        attempt.TimeSpent = DateTime.UtcNow - attempt.CompletedAt; // предполагаем, что при старте записали время
+        attempt.TimeSpent = DateTime.UtcNow - attempt.CompletedAt;
         attempt.CompletedAt = DateTime.UtcNow;
 
         await _attemptRepository.UpdateAsync(attempt);
-
         return attempt;
     }
 

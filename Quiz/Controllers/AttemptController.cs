@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Quiz.DTOs.Answer;
 using Quiz.DTOs.Attempt;
 using Quiz.Models;
 using Quiz.Services.Interfaces;
@@ -12,10 +13,12 @@ namespace Quiz.Controllers;
 public class AttemptController : ControllerBase
 {
     private readonly IAttemptService _attemptService;
+    private readonly IUserAnswerService _answerService;
 
-    public AttemptController(IAttemptService attemptService)
+    public AttemptController(IAttemptService attemptService, IUserAnswerService answerService)
     {
         _attemptService = attemptService;
+        _answerService = answerService;
     }
 
     private AttemptDto MapToAttemptDto(Attempt attempt)
@@ -32,23 +35,22 @@ public class AttemptController : ControllerBase
             };
     }
     
-    private AttemptResultDto MapToAttemptResultDto(Attempt attempt)
-    {
-         return new AttemptResultDto
-            {
-                Id = attempt.Id,
-                Score = attempt.Score,
-                TimeSpent = attempt.TimeSpent,
-                CompletedAt = attempt.CompletedAt,
-                UserId = attempt.UserId,
-                GuestSessionId = attempt.UserId == null ? attempt.GuestSessionId : null,
-                QuizId = attempt.QuizId,
-                CorrectAnswersCount = attempt.Score //количество правильных ответов
-            };
-    }
+    //private AttemptResultDto MapToAttemptResultDto(Attempt attempt)
+    //{
+    //     return new AttemptResultDto
+    //        {
+    //            Id = attempt.Id,
+    //            Score = attempt.Score,
+    //            TimeSpent = attempt.TimeSpent,
+    //            CompletedAt = attempt.CompletedAt,
+    //            UserId = attempt.UserId,
+    //            GuestSessionId = attempt.UserId == null ? attempt.GuestSessionId : null,
+    //            QuizId = attempt.QuizId
+    //        };
+    //}
 
     // POST: api/attempt/quiz-sessions/{quizId}/start
-    [HttpPost("quiz-sessions/{quizId}/start")]
+    [HttpPost("{quizId}/start")]
     public async Task<IActionResult> StartAttempt(int quizId)
     {
         if (!ModelState.IsValid)
@@ -65,8 +67,8 @@ public class AttemptController : ControllerBase
         }
     }
 
-    // POST: api/attempt/quiz-sessions/stop
-    [HttpPost("quiz-sessions/stop")] 
+    // POST: api/attempt/stop
+    [HttpPost("stop")] 
     public async Task<IActionResult> FinishAttempt([FromBody] FinishAttemptDto dto)
     {
         if (!ModelState.IsValid)
@@ -74,10 +76,8 @@ public class AttemptController : ControllerBase
 
         try
         {
-            // Используем новый FinishAttemptDto, содержащий коллекцию SelectedOptionIds
-            var attempt = await _attemptService.FinishAttemptAsync(dto.AttemptId, dto.Answers); 
-            
-            return Ok(MapToAttemptResultDto(attempt));
+            var attempt = await _attemptService.FinishAttemptAsync(dto.AttemptId, dto.Answers);  
+            return Ok(MapToAttemptDto(attempt));
         }
         catch (KeyNotFoundException ex)
         {
@@ -104,30 +104,22 @@ public class AttemptController : ControllerBase
         return Ok(MapToAttemptDto(attempt));
     }
 
-    // GET: api/attempt/by-user/{userId}
-    [HttpGet("by-user/{userId}")]
-    public async Task<IActionResult> GetByUser(int userId)
+    // GET: api/attempt/{attemptId}/answers
+    [HttpGet("{attemptId}/answers")]
+    public async Task<IActionResult> GetAnswers(int attemptId)
     {
-        var attempts = await _attemptService.GetByUserIdAsync(userId);
+        var answers = await _answerService.GetAnswersByAttemptAsync(attemptId);
 
-        if (!attempts.Any())
-            return Ok(new List<AttemptDto>());
+        if (!answers.Any())
+            return Ok(new List<AnswerDto>());
 
-        var result = attempts.Select(MapToAttemptDto);
-
-        return Ok(result);
-    }
-
-    // GET: api/attempt/by-quiz/{quizId}
-    [HttpGet("by-quiz/{quizId}")]
-    public async Task<IActionResult> GetByQuiz(int quizId)
-    {
-        var attempts = await _attemptService.GetByQuizIdAsync(quizId);
-
-        if (!attempts.Any())
-            return Ok(new List<AttemptDto>());
-
-        var result = attempts.Select(MapToAttemptDto);
+        var result = answers.Select(a => new AnswerDto
+        {
+            Id = a.Id,
+            AttemptId = a.AttemptId,
+            QuestionId = a.QuestionId,
+            ChosenOptionId = a.ChosenOptionId
+        });
 
         return Ok(result);
     }

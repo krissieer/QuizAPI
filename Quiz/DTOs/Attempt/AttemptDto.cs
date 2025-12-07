@@ -11,7 +11,7 @@ public class AttemptDto
     public int QuizId { get; set; }
 }
 
-public class AttemptResultDto : AttemptDto
-{
-    public int CorrectAnswersCount { get; set; }
-}
+//public class AttemptResultDto : AttemptDto
+//{
+//    public int CorrectAnswersCount { get; set; }
+//}

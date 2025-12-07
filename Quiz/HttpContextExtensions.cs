@@ -1,4 +1,6 @@
-﻿namespace Quiz;
+﻿using System.Security.Claims;
+
+namespace Quiz;
 
 public static class HttpContextExtensions
 {
@@ -14,11 +16,9 @@ public static class HttpContextExtensions
     {
         if (context.User.Identity?.IsAuthenticated == true)
         {
-            var idClaim = context.User.Claims.FirstOrDefault(c => c.Type == "user_id");
-            if (int.TryParse(idClaim?.Value, out int userId))
-                return userId;
+            var claimValue = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(claimValue, out var userId) ? userId : null;
         }
-
         return null;
     }
 }

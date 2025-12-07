@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Quiz.DTOs.Attempt;
+using Quiz.DTOs.Question;
 using Quiz.DTOs.Quiz;
+using Quiz.Models;
+using Quiz.Services.Implementations;
 using Quiz.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -13,10 +17,14 @@ namespace Quiz.Controllers;
 public class QuizController : ControllerBase
 {
     private readonly IQuizService _quizService;
+    private readonly IQuestionService _questionService;
+    private readonly IAttemptService _attemptService;
 
-    public QuizController(IQuizService quizService)
+    public QuizController(IQuizService quizService, IQuestionService questionService, IAttemptService attemptService)
     {
         _quizService = quizService;
+        _questionService = questionService;
+        _attemptService = attemptService;
     }
 
     // GET: api/quiz
@@ -66,27 +74,50 @@ public class QuizController : ControllerBase
         return Ok(result);
     }
 
-    // GET: api/quiz/by-author/{authorId}
-    [HttpGet("by-author/{authorId}")]
-    public async Task<IActionResult> GetByAuthor(int authorId)
+    // GET: api/quiz/{quizId}/questions
+    [HttpGet("{quizId}/questions")]
+    public async Task<IActionResult> GetQuestions(int quizId)
     {
-        var quizzes = await _quizService.GetByAuthorAsync(authorId);
+        var questions = await _questionService.GetByQuizAsync(quizId);
 
-        if (!quizzes.Any())
-            return Ok(new List<QuizDto>());
+        if (!questions.Any())
+            return Ok(new List<QuestionDto>());
 
-        var result = quizzes.Select(q => new QuizDto
+        var result = questions.Select(q => new QuestionDto
         {
             Id = q.Id,
-            Title = q.Title,
-            Description = q.Description,
-            CategoryId = q.CategoryId,
-            IsPublic = q.isPublic,
-            AuthorId = q.AuthorId,
-            TimeLimit = q.TimeLimit,
-            CreatedAt = q.CreatedAt
+            Text = q.Text,
+            Type = q.Type,
+            QuizId = q.QuizId,
+            Options = q.Options.Select(o => new OptionDto
+            {
+                Id = o.Id,
+                Text = o.Text,
+            }).ToList()
         });
 
+        return Ok(result);
+    }
+
+    // GET: api/quiz/{quizId}/attempts
+    [HttpGet("{quizId}/attempts")]
+    public async Task<IActionResult> GetAttepmts(int quizId)
+    {
+        var attempts = await _attemptService.GetByQuizIdAsync(quizId);
+
+        if (!attempts.Any())
+            return Ok(new List<AttemptDto>());
+
+        var result = attempts.Select(a => new AttemptDto
+        {
+            Id = a.Id,
+            Score = a.Score,
+            TimeSpent = a.TimeSpent,
+            CompletedAt = a.CompletedAt,
+            UserId = a.UserId,
+            GuestSessionId = a.UserId == null ? a.GuestSessionId : null,
+            QuizId = a.QuizId
+        });
         return Ok(result);
     }
 
@@ -145,6 +176,11 @@ public class QuizController : ControllerBase
         if (existing == null)
             return NotFound($"Quiz with ID {id} not found.");
 
+        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int authorizedUserId = int.Parse(user);
+        if (existing.AuthorId != authorizedUserId)
+            return Conflict("You have no access to edit this quiz");
+
         existing.Title = dto.Title ?? existing.Title;
         existing.Description = dto.Description ?? existing.Description;
         existing.CategoryId = dto.CategoryId ?? existing.CategoryId;
@@ -166,6 +202,12 @@ public class QuizController : ControllerBase
         var quiz = await _quizService.GetByIdAsync(id);
         if (quiz == null)
             return NotFound($"Quiz with ID {id} not found.");
+
+        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int authorizedUserId = int.Parse(user);
+        if (quiz.AuthorId != authorizedUserId)
+            return Conflict("You have no access to edit this quiz");
+
         var success = await _quizService.DeleteAsync(id);
         if (!success)
             return StatusCode(500, "Failed to delete quiz due to server error.");

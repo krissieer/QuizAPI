@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Quiz.DTOs.Question;
+using Quiz.DTOs.Quiz;
 using Quiz.Models;
 using Quiz.Services.Implementations;
 using Quiz.Services.Interfaces;
@@ -13,10 +14,12 @@ namespace Quiz.Controllers;
 public class QuestionController : ControllerBase
 {
     private readonly IQuestionService _questionService;
+    private readonly IOptionService _optionService;
 
-    public QuestionController(IQuestionService questionService)
+    public QuestionController(IQuestionService questionService, IOptionService optionService)
     {
         _questionService = questionService;
+        _optionService = optionService;
     }
 
     private QuestionDto MapToQuestionDto(Question q)
@@ -44,20 +47,6 @@ public class QuestionController : ControllerBase
             return NotFound($"Question with ID {id} not found.");
 
         return Ok(MapToQuestionDto(q));
-    }
-
-    // GET: api/question/by-quiz/{quizId}
-    [HttpGet("by-quiz/{quizId}")]
-    public async Task<IActionResult> GetByQuiz(int quizId)
-    {
-        var questions = await _questionService.GetByQuizAsync(quizId);
-
-        if (!questions.Any())
-            return Ok(new List<QuestionDto>());
-
-        var result = questions.Select(MapToQuestionDto);
-
-        return Ok(result);
     }
 
     // POST: api/question
@@ -133,5 +122,80 @@ public class QuestionController : ControllerBase
         if (!success)
             return NotFound($"Question with ID {id} not found or failed to delete."); 
         return Ok("Deleted");
+    }
+
+    // GET: api/question/option/{id}
+    [HttpGet("option/{optionid}")]
+    public async Task<IActionResult> GetOptionById(int optionid)
+    {
+        var option = await _optionService.GetByIdAsync(optionid);
+        if (option == null)
+            return NotFound($"Option with ID {optionid} not found.");
+
+        var result = new OptionDto
+        {
+            Id = option.Id,
+            Text = option.Text
+        };
+
+        return Ok(result);
+    }
+
+    // GET: api/question/{id}/options
+    [HttpGet("{questionid}/options")]
+    public async Task<IActionResult> GetByQuestion(int questionid)
+    {
+        var options = await _optionService.GetByQuestionAsync(questionid);
+        if (!options.Any())
+            return Ok(new List<OptionDto>());
+
+        var result = options.Select(o => new OptionDto
+        {
+            Id = o.Id,
+            Text = o.Text
+        });
+
+        return Ok(result);
+    }
+
+    // POST: api/question/{id}/option
+    [HttpPost("{questionid}/option")]
+    [Authorize]
+    public async Task<IActionResult> Create(int questionid, [FromBody] CreateOptionDto dto)
+    {
+        var option = new Option
+        {
+            QuestionId = questionid,
+            Text = dto.Text,
+            IsCorrect = dto.IsCorrect
+        };
+
+        var created = await _optionService.CreateAsync(option);
+
+        return Ok(new OptionDto
+        {
+            Id = created.Id,
+            Text = created.Text
+        });
+    }
+
+    // PUT: api/question/option/{id}
+    [HttpPut("option/{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateOption(int id, [FromBody] UpdateOptionDto dto)
+    {
+        var existing = await _optionService.GetByIdAsync(id);
+        if (existing == null)
+            return NotFound($"Option with ID {id} not found.");
+
+        existing.Text = dto.Text ?? existing.Text;
+        existing.IsCorrect = dto.IsCorrect ?? existing.IsCorrect;
+
+        var result = await _optionService.UpdateAsync(existing);
+
+        if (!result)
+            return StatusCode(500, "Failed to update option due to server error.");
+
+        return Ok("Updated");
     }
 }

@@ -8,7 +8,6 @@ public class QuizCreateDto
     public string? Description { get; set; }
     public int? CategoryId { get; set; }
     [Required]
-    //public string Language { get; set; } = "Russian";
     public bool IsPublic { get; set; }
     public TimeSpan TimeLimit { get; set; }
 }

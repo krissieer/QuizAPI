@@ -18,6 +18,11 @@ public class CategoryService : ICategoryService
         return await _categoryRepository.GetByIdAsync(id);
     }
 
+    public async Task<Category?> GetByNameAsync(string name)
+    {
+        return await _categoryRepository.GetByNameAsync(name);
+    }
+
     public async Task<IEnumerable<Category>> GetAllAsync()
     {
         return await _categoryRepository.GetAllAsync();
