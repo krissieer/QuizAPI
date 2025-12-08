@@ -32,11 +32,13 @@ public class QuestionService : IQuestionService
         if (optionTexts.Count != isCorrectFlags.Count)
             throw new ArgumentException("Options and correctness flags count must match");
 
+        ValidateOptions(question, isCorrectFlags);
+
         var quiz = await _quizRepository.GetByIdAsync(question.QuizId)
             ?? throw new KeyNotFoundException("Quiz not found");
 
         await _questionRepository.AddAsync(question);
-        
+
         // Создаём опции
         var options = new List<Option>();
         for (int i = 0; i < optionTexts.Count; i++)
@@ -68,6 +70,8 @@ public class QuestionService : IQuestionService
         {
             if (optionTexts.Count != isCorrectFlags.Count)
                 throw new ArgumentException("Options and flags count must match");
+            
+            ValidateOptions(existing, isCorrectFlags);
 
             // Удаляем старые
             foreach (var opt in existing.Options.ToList())
@@ -98,7 +102,37 @@ public class QuestionService : IQuestionService
         if (existing == null)
             return false;
 
-        await _questionRepository.DeleteAsync(id); 
+        await _questionRepository.DeleteAsync(id);
         return true;
+    }
+    
+    private void ValidateOptions(Question question, List<bool> isCorrectFlags)
+    {
+        // 1. Проверка минимального количества опций
+        if (isCorrectFlags.Count < 2)
+        {
+            throw new InvalidOperationException("Question must have at least two options.");
+        }
+
+        // Считаем количество правильных опций
+        int correctCount = isCorrectFlags.Count(isCorrect => isCorrect);
+
+        // 2. Валидация в зависимости от типа вопроса
+        if (question.Type == QuestionType.Single)
+        {
+            // Для одиночного выбора должно быть ровно 1 правильная опция
+            if (correctCount != 1)
+            {
+                throw new InvalidOperationException("Single-choice question must have exactly one correct option.");
+            }
+        }
+        else if (question.Type == QuestionType.Multiple)
+        {
+            // Для множественного выбора должна быть хотя бы 2 правильные опции
+            if (correctCount < 2)
+            {
+                throw new InvalidOperationException("Multiple-choice question must have at least two corrects option.");
+            }
+        }
     }
 }
