@@ -211,22 +211,26 @@ public class UserController : ControllerBase
         {
             return BadRequest(ModelState);
         }
-        string token = await _userService.LoginAsync(dto.Username, dto.Password);
-        if (string.IsNullOrEmpty(token))
-            return Unauthorized("Invalid username or password");
-
-        var user = await _userService.GetByUsernameAsync(dto.Username);
-        var refresh = await _refreshTokenService.CreateRefreshToken(user.Id);
-
-        Response.Cookies.Append("refreshToken", refresh, new CookieOptions
+        try
         {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddDays(7)
-        });
+            string token = await _userService.LoginAsync(dto.Username, dto.Password);
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized("Invalid username or password");
 
-        return Ok(new { Token = token });
+            var user = await _userService.GetByUsernameAsync(dto.Username);
+            var refresh = await _refreshTokenService.CreateRefreshToken(user.Id);
+
+            Response.Cookies.Append("refreshToken", refresh, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(7)
+            });
+
+            return Ok(new { Token = token });
+        }
+        catch (Exception ex) { return StatusCode(500, ex.Message); }
     }
 
     [HttpPost("refresh")]

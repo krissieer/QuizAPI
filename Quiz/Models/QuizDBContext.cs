@@ -24,6 +24,7 @@ public class QuizDBContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<UserAnswer> UserAnswers { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<LoginAttempt> LoginAttempts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

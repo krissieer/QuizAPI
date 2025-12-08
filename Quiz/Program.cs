@@ -49,11 +49,7 @@ public class Program
 
         builder.Services.AddDbContext<QuizDBContext>(options =>
         {
-            var dataSourceBuilder = new NpgsqlDataSourceBuilder(
-                builder.Configuration.GetConnectionString("DefaultConnection"));
-            dataSourceBuilder.EnableDynamicJson(); 
-            var dataSource = dataSourceBuilder.Build();
-            options.UseNpgsql(dataSource);
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
         });
 
         builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -64,6 +60,7 @@ public class Program
         builder.Services.AddScoped<IOptionRepository, OptionRepository>();
         builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
         builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        builder.Services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
 
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IQuizService, QuizService>();
