@@ -10,8 +10,3 @@ public class AttemptDto
     public string? GuestSessionId { get; set; }
     public int QuizId { get; set; }
 }
-
-//public class AttemptResultDto : AttemptDto
-//{
-//    public int CorrectAnswersCount { get; set; }
-//}

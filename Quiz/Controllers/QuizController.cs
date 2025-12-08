@@ -143,13 +143,50 @@ public class QuizController : ControllerBase
 
     // GET: api/quiz/{quizId}/attempts
     [HttpGet("{quizId}/attempts")]
-    public async Task<IActionResult> GetAttepmts(int quizId)
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAttepmts(int quizId, [FromQuery] string? guestSessionId)
     {
-        var attempts = await _attemptService.GetByQuizIdAsync(quizId);
+        var quiz = await _quizService.GetByIdAsync(quizId);
+        if (quiz == null)
+            return NotFound($"Quiz with ID {quizId} not found.");
+
+        bool isAuthorizedUser = User.Identity?.IsAuthenticated ?? false;
+        int? authorizedUserId = null;
+        
+        if (isAuthorizedUser)
+        {
+            var userClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userClaim))
+            {
+                authorizedUserId = int.Parse(userClaim);
+            }
+        }
+    
+        IEnumerable<Attempt> attempts;
+
+        if (isAuthorizedUser && quiz.AuthorId == authorizedUserId)
+        {
+            attempts = await _attemptService.GetByQuizIdAsync(quizId); // Получает все попытки
+        }
+        // АВТОРИЗОВАННЫЙ ПОЛЬЗОВАТЕЛЬ (Видит только СВОИ попытки)
+        else if (isAuthorizedUser && authorizedUserId.HasValue)
+        {
+            attempts = await _attemptService.GetAttemptsByUserIdAndQuizIdAsync(authorizedUserId.Value, quizId);
+        }
+        // ГОСТЬ (Видит только свои попытки по GuestSessionId)
+        else if (!string.IsNullOrEmpty(guestSessionId))
+        {
+            attempts = await _attemptService.GetAttemptsByGuestIdAndQuizIdAsync(guestSessionId, quizId);
+        }
+        else
+        {
+            return Forbid("Access denied. You must be the quiz author, an authenticated user, or provide a valid guest session ID to view attempts.");
+        }
 
         if (!attempts.Any())
             return Ok(new List<AttemptDto>());
 
+        // Маппинг и возврат
         var result = attempts.Select(a => new AttemptDto
         {
             Id = a.Id,

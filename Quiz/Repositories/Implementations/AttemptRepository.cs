@@ -73,6 +73,27 @@ public class AttemptRepository : IAttemptRepository
             .ThenBy(a => a.TimeSpent)
             .ToListAsync();
     }
+
+    // Получить попытки конкретного пользователя в конкретной викторине
+    public async Task<IEnumerable<Attempt>> GetAttemptsByUserIdAndQuizIdAsync(int userId, int quizId)
+    {
+        return await _context.Attempts
+            .Where(a => a.UserId == userId && a.QuizId == quizId)
+            .Include(a => a.Quiz)
+            .OrderByDescending(a => a.CompletedAt)
+            .ToListAsync();
+    }
+
+    // Получить попытки конкретного гостя в конкретной викторине
+    public async Task<IEnumerable<Attempt>> GetAttemptsByGuestIdAndQuizIdAsync(string guestSessionId, int quizId)
+    {
+        return await _context.Attempts
+            .Where(a => a.GuestSessionId == guestSessionId && a.QuizId == quizId)
+            .Include(a => a.Quiz)
+            .OrderByDescending(a => a.CompletedAt)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Attempt>> GetLeaderboardAsync(int? quizId = null)
     {
         var query = _context.Attempts

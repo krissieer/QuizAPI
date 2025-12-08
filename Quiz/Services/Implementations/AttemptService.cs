@@ -39,6 +39,12 @@ public class AttemptService : IAttemptService
 
     public async Task<IEnumerable<Attempt>> GetByQuizIdAsync(int quizId)
         => await _attemptRepository.GetAttemptsByQuizAsync(quizId);
+    
+    public async Task<IEnumerable<Attempt>> GetAttemptsByUserIdAndQuizIdAsync(int userId, int quizId)
+        => await _attemptRepository.GetAttemptsByUserIdAndQuizIdAsync(userId, quizId);
+
+    public async Task<IEnumerable<Attempt>> GetAttemptsByGuestIdAndQuizIdAsync(string guestSessionId, int quizId)
+        => await _attemptRepository.GetAttemptsByGuestIdAndQuizIdAsync(guestSessionId, quizId);
 
     public async Task<Attempt> StartAttemptAsync(int quizId)
     {

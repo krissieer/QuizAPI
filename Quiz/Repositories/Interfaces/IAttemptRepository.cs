@@ -13,5 +13,7 @@ public interface IAttemptRepository
 
     Task<IEnumerable<Attempt>> GetAttemptsByUserAsync(int userId);
     Task<IEnumerable<Attempt>> GetAttemptsByQuizAsync(int quizId);
+    Task<IEnumerable<Attempt>> GetAttemptsByUserIdAndQuizIdAsync(int userId, int quizId);
+    Task<IEnumerable<Attempt>> GetAttemptsByGuestIdAndQuizIdAsync(string guestSessionId, int quizId);
     Task<IEnumerable<Attempt>> GetLeaderboardAsync(int? quizId = null);
 }
