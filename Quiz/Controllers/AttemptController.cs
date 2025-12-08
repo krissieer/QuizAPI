@@ -67,16 +67,16 @@ public class AttemptController : ControllerBase
         }
     }
 
-    // POST: api/attempt/stop
-    [HttpPost("stop")] 
-    public async Task<IActionResult> FinishAttempt([FromBody] FinishAttemptDto dto)
+    // POST: api/attempt/{attemptid}/stop
+    [HttpPost("{attemptid}/stop")] 
+    public async Task<IActionResult> FinishAttempt(int attemptid, [FromBody] FinishAttemptDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         try
         {
-            var attempt = await _attemptService.FinishAttemptAsync(dto.AttemptId, dto.Answers);  
+            var attempt = await _attemptService.FinishAttemptAsync(attemptid, dto.Answers);  
             return Ok(MapToAttemptDto(attempt));
         }
         catch (KeyNotFoundException ex)

@@ -9,5 +9,5 @@ public class QuizCreateDto
     public int? CategoryId { get; set; }
     [Required]
     public bool IsPublic { get; set; }
-    public TimeSpan TimeLimit { get; set; }
+    public TimeSpan? TimeLimit { get; set; } = TimeSpan.Zero;
 }

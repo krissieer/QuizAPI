@@ -170,6 +170,11 @@ public class UserController : ControllerBase
         if (existing == null)
             return NotFound($"User with ID {id} not found.");
 
+        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int authorizedUserId = int.Parse(user);
+        if (existing.Id != authorizedUserId)
+            return Conflict("You have no access to edit this user");
+
         string? hashedPassword = null;
         if (dto.Password is not null)
             hashedPassword = PasswordHasher.HashPassword(dto.Password);
@@ -196,9 +201,14 @@ public class UserController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
-        var quiz = await _userService.GetByIdAsync(id);
-        if (quiz == null)
+        var existing = await _userService.GetByIdAsync(id);
+        if (existing == null)
             return NotFound($"User with ID {id} not found.");
+
+        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int authorizedUserId = int.Parse(user);
+        if (existing.Id != authorizedUserId)
+            return Conflict("You have no access to delete this user");
 
         var success = await _userService.DeleteAsync(id);
         if (!success)
