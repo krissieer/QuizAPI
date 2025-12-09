@@ -21,16 +21,32 @@ public class UserAnswerService : IUserAnswerService
         _questionRepository = questionRepository;
     }
 
+    /// <summary>
+    /// Получить ответ пользваотеля по id ответа
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<UserAnswer?> GetByIdAsync(int id)
     {
         return await _useranswerRepository.GetByIdAsync(id);
     }
 
+    /// <summary>
+    /// Получить ответы пользователя по попытке
+    /// </summary>
+    /// <param name="attemptId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<UserAnswer>> GetAnswersByAttemptAsync(int attemptId)
     {
         return await _useranswerRepository.GetAnswersByAttemptAsync(attemptId);
     }
 
+    /// <summary>
+    /// Создать ответ пользователя
+    /// </summary>
+    /// <param name="answer"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<UserAnswer> CreateAsync(UserAnswer answer)
     {
         // Проверяем, существует ли попытка

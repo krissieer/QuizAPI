@@ -110,12 +110,15 @@ public class Program
             app.UseSwaggerUI();
         }
 
+        app.UseMiddleware<RequestLoggingMiddleware>();
+
         app.UseHsts();
         app.UseHttpsRedirection();
         app.UseRouting();
 
-        app.UseMiddleware<SecurityHeadersMiddleware>();
-        app.UseMiddleware<RequestLoggingMiddleware>();
+        app.UseCors("Frontend");
+
+        app.UseMiddleware<SecurityHeadersMiddleware>();        
         app.UseMiddleware<GuestSessionMiddleware>();
         app.UseMiddleware<HtmlSanitizerMiddleware>();
 

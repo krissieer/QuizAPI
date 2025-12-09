@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Quiz.DTOs.Answer;
 using Quiz.DTOs.Attempt;
 using Quiz.Models;
+using Quiz.Services.Implementations;
 using Quiz.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -92,8 +93,36 @@ public class AttemptController : ControllerBase
 
     // GET: api/attempt/{attemptId}/answers
     [HttpGet("{attemptId}/answers")]
-    public async Task<IActionResult> GetAnswers(int attemptId)
+    public async Task<IActionResult> GetAnswers(int attemptId, [FromQuery] string? guestSessionId)
     {
+        var attempt = await _attemptService.GetByIdAsync(attemptId);
+        if (attempt == null)
+            return NotFound($"Attempt with ID {attemptId} not found.");
+
+        var quiz = attempt.Quiz;
+        if (quiz == null)
+            return NotFound("Quiz for this attempt not found.");
+
+        bool isAuthorizedUser = User.Identity?.IsAuthenticated ?? false;
+        int? authorizedUserId = null;
+
+        if (isAuthorizedUser)
+        {
+            var userClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userClaim))
+                authorizedUserId = int.Parse(userClaim);
+        }
+
+        bool isQuizAuthor = authorizedUserId.HasValue && quiz.AuthorId == authorizedUserId.Value;
+        bool isAttemptOwner = authorizedUserId.HasValue && attempt.UserId == authorizedUserId.Value;
+        bool isGuestOwner = !string.IsNullOrEmpty(attempt.GuestSessionId) &&
+                            !string.IsNullOrEmpty(guestSessionId) &&
+                            attempt.GuestSessionId == guestSessionId;
+
+        if (!isQuizAuthor && !isAttemptOwner && !isGuestOwner)
+            return StatusCode(StatusCodes.Status403Forbidden,
+                "Access denied. Only the quiz author, the user who took the attempt, or the guest session owner can view these answers.");
+
         var answers = await _answerService.GetAnswersByAttemptAsync(attemptId);
 
         if (!answers.Any())

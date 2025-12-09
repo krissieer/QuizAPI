@@ -93,23 +93,4 @@ public class AttemptRepository : IAttemptRepository
             .OrderByDescending(a => a.CompletedAt)
             .ToListAsync();
     }
-
-    public async Task<IEnumerable<Attempt>> GetLeaderboardAsync(int? quizId = null)
-    {
-        var query = _context.Attempts
-            .Include(a => a.User)
-            .Include(a => a.Quiz)
-            .AsQueryable();
-
-        if (quizId.HasValue)
-        {
-            query = query.Where(a => a.QuizId == quizId.Value);
-        }
-
-        return await query
-            .OrderByDescending(a => a.Score)
-            .ThenBy(a => a.TimeSpent)
-            .Take(100) // топ-100, можно параметризовать
-            .ToListAsync();
-    }
 }
