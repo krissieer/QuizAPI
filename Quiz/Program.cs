@@ -93,13 +93,13 @@ public class Program
 
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("Frontend", p =>
+            options.AddDefaultPolicy(policy =>
             {
-                p.WithOrigins("https://localhost:7080")
-                   .AllowAnyMethod()
-                   .AllowAnyHeader()
-                   .AllowCredentials();
+                policy.WithOrigins("http://localhost:3000");
+                policy.AllowAnyHeader();
+                policy.AllowAnyMethod();
             });
+
         });
 
         var app = builder.Build();
@@ -116,7 +116,8 @@ public class Program
         app.UseHttpsRedirection();
         app.UseRouting();
 
-        app.UseCors("Frontend");
+        //app.UseCors("Frontend");
+        app.UseCors();
 
         app.UseMiddleware<SecurityHeadersMiddleware>();        
         app.UseMiddleware<GuestSessionMiddleware>();
