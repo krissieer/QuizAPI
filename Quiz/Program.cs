@@ -101,20 +101,41 @@ public class Program
         });
 
         var app = builder.Build();
-
         using (var scope = app.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
-            try
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            
+            int maxRetries = 10;
+            int delaySeconds = 5; 
+            
+            for (int i = 0; i < maxRetries; i++)
             {
-                var context = services.GetRequiredService<QuizDBContext>();
-                context.Database.Migrate(); 
-                Console.WriteLine("Database migrations applied successfully.");
-            }
-            catch (Exception ex)
-            {
-                var logger = services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(ex, "An error occurred while migrating the database.");
+                try
+                {
+                    var context = services.GetRequiredService<QuizDBContext>();
+                    
+                    context.Database.Migrate(); 
+                    logger.LogInformation("Database migrations applied successfully.");
+                    break; 
+                }
+                catch (Npgsql.NpgsqlException ex) when (ex.InnerException is System.Net.Sockets.SocketException)
+                {
+                    logger.LogWarning($"Attempt {i + 1} of {maxRetries}: Database connection failed (Connection refused). Retrying in {delaySeconds} seconds...");
+
+                    if (i == maxRetries - 1)
+                    {
+                        logger.LogError(ex, "Failed to connect to the database after all retries.");
+                        throw; 
+                    }
+                    Thread.Sleep(delaySeconds * 1000); 
+                    delaySeconds *= 2; 
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "An error occurred while migrating the database.");
+                    throw; 
+                }
             }
         }
 

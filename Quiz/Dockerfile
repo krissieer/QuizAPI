@@ -1,23 +1,12 @@
-# Этап 1: Сборка
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src/Quiz/
-
-# 1. Копируем файл проекта из корня контекста (Quiz.csproj)
-COPY ["Quiz.csproj", "."] 
-
-# 2. Восстанавливаем зависимости
+WORKDIR /app
+COPY Quiz.csproj .
 RUN dotnet restore
-
-# 3. Копируем весь остальной код из корня контекста
 COPY . .
-
-# 4. Публикуем приложение в режиме Release
-RUN dotnet publish -c Release -o /app/publish
-
-# Этап 2: Запуск (Уменьшенный размер)
+RUN dotnet publish "Quiz.csproj" -c Release -o /publish --no-restore
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=build /publish .
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Quiz.dll"]
