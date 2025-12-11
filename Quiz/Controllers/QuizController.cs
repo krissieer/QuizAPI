@@ -77,7 +77,7 @@ public class QuizController : ControllerBase
             else
             {
                 // Если викторина приватна и пользователь не автор, запрещаем доступ к деталям
-                return Forbid("Access denied for this private quiz details.");
+                return StatusCode(403, new { error = "This quiz is private. An access key or authorization is required." });
             }
         }
 
@@ -117,7 +117,7 @@ public class QuizController : ControllerBase
 
             if (!isAuthor && !hasValidKey)
             {
-                return Forbid("Access denied for this private quiz."); 
+                return StatusCode(403, new { error = "An access key is required to view the questions in this quiz." });
             }
         }
 
@@ -181,7 +181,7 @@ public class QuizController : ControllerBase
         }
         else
         {
-            return Forbid("Access denied. You must be the quiz author, an authenticated user, or provide a valid guest session ID to view attempts.");
+            return StatusCode(403, new { error = "Viewing attempts requires authorization or providing a GuestSessionId." });
         }
 
         if (!attempts.Any())
@@ -295,7 +295,7 @@ public class QuizController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (existing.AuthorId != authorizedUserId)
-            return Forbid("You have no access to edit this quiz");
+            return StatusCode(403, new { error = "Only the author of a quiz can edit it." });
 
         existing.Title = dto.Title ?? existing.Title;
         existing.Description = dto.Description ?? existing.Description;
@@ -355,8 +355,7 @@ public class QuizController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (quiz.AuthorId != authorizedUserId)
-            return Forbid("You have no access to edit this quiz");
-
+            return StatusCode(403, new { error = "Only the author of a quiz can delete it." });
         var success = await _quizService.DeleteAsync(id);
         if (!success)
             return StatusCode(500, "Failed to delete quiz due to server error.");

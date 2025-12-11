@@ -48,8 +48,13 @@ public class AttemptService : IAttemptService
 
     public async Task<Attempt> StartAttemptAsync(int quizId)
     {
-        var quiz = await _quizRepository.GetByIdAsync(quizId)
+        var quiz = await _quizRepository.GetByIdWithQuestionsAsync(quizId)
             ?? throw new KeyNotFoundException("Quiz not found");
+    
+        if (!quiz.Questions.Any())
+        {
+            throw new InvalidOperationException("Cannot start the quiz. It must contain at least one question.");
+        }
 
         var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int? userId = int.TryParse(userIdClaim, out var uid) ? uid : null;

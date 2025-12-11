@@ -64,8 +64,7 @@ public class QuestionController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (quiz.AuthorId != authorizedUserId)
-            return Forbid("You have no access to add questtions in this quiz");
-
+            return StatusCode(403, new { error = "Only the quiz author can add questions to the quiz." });
         try
         {
             var question = new Question
@@ -101,8 +100,8 @@ public class QuestionController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (existing.Quiz.AuthorId != authorizedUserId)
-            return Forbid("You have no access to edit this questtion");
-
+            return StatusCode(403, new { error = "Only the quiz author can edit a question." });
+            
         existing.Text = dto.Text ?? existing.Text;
         existing.Type = dto.Type ?? existing.Type;
         
@@ -138,7 +137,7 @@ public class QuestionController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (question.Quiz.AuthorId != authorizedUserId)
-            return Forbid("You have no access to delete this questtion");
+            return StatusCode(403, new { error = "Only the quiz author can delete a question." });
 
         var success = await _questionService.DeleteAsync(id);
         
@@ -193,7 +192,7 @@ public class QuestionController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (question.Quiz.AuthorId != authorizedUserId)
-            return Forbid("You have no access to add options");
+            return StatusCode(403, new { error = "Only the quiz author can add answer options." });
 
         var option = new Option
         {
@@ -224,7 +223,7 @@ public class QuestionController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (question.Quiz.AuthorId != authorizedUserId)
-            return Forbid("You have no access to edit this option");
+            return StatusCode(403, new { error = "Only the quiz author can edit the answer option." });
 
         existing.Text = dto.Text ?? existing.Text;
         existing.IsCorrect = dto.IsCorrect ?? existing.IsCorrect;
@@ -251,8 +250,8 @@ public class QuestionController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (question.Quiz.AuthorId != authorizedUserId)
-            return Forbid("You have no access to delete this option");
-
+            return StatusCode(403, new { error = "Only the quiz author can delete an answer option." });
+            
         var success = await _optionService.DeleteAsync(id);
         if (!success)
             return StatusCode(500, "Failed to delete option due to server error.");

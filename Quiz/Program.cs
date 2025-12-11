@@ -139,11 +139,12 @@ public class Program
             }
         }
 
-        if (app.Environment.IsDevelopment())
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "Quiz API V1");
+            c.RoutePrefix = "swagger"; 
+        });
 
         app.UseMiddleware<RequestLoggingMiddleware>();
 

@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
-COPY Quiz.csproj .
+COPY ["Quiz.csproj", "."]
 RUN dotnet restore
 COPY . .
 RUN dotnet publish "Quiz.csproj" -c Release -o /publish --no-restore

@@ -96,4 +96,11 @@ public class QuizRepository : IQuizRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<Models.Quiz?> GetByIdWithQuestionsAsync(int id)
+    {
+        return await _context.Quizzes
+            .Include(q => q.Questions) // <-- Включаем вопросы
+            .FirstOrDefaultAsync(q => q.Id == id);
+    }
 }

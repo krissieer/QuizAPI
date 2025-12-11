@@ -139,7 +139,7 @@ public class UserController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (existing.Id != authorizedUserId)
-            return Forbid("You have no access to edit this user");
+            return StatusCode(403, new { error = "You can only edit your own profile" });
 
         string? hashedPassword = null;
         if (dto.Password is not null)
@@ -174,13 +174,17 @@ public class UserController : ControllerBase
         var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int authorizedUserId = int.Parse(user);
         if (existing.Id != authorizedUserId)
-            return Forbid("You have no access to delete this user");
-
-        var success = await _userService.DeleteAsync(id);
-        if (!success)
-            return StatusCode(500, "Failed to delete user due to server error.");
-        return Ok("Deleted");
-    }
+        {
+            return StatusCode(403, new 
+            { 
+                error = "You are only allowed to delete your own user profile." 
+            });
+        }
+            var success = await _userService.DeleteAsync(id);
+            if (!success)
+                return StatusCode(500, "Failed to delete user due to server error.");
+            return Ok("Deleted");
+        }
 
     [HttpPost("register")]
     public async Task<IActionResult> AddNewUser([FromBody] AuthDto dto)
