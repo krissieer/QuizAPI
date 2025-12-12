@@ -133,7 +133,8 @@ public class AttemptController : ControllerBase
             Id = a.Id,
             AttemptId = a.AttemptId,
             QuestionId = a.QuestionId,
-            ChosenOptionId = a.ChosenOptionId
+            ChosenOptionId = a.ChosenOptionId,
+            isCorrect = a.ChosenOption.IsCorrect
         });
 
         return Ok(result);
