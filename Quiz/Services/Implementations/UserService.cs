@@ -18,21 +18,41 @@ public class UserService : IUserService
         _loginAttemptRepository = loginAttemptRepository;
     }
 
+    /// <summary>
+    /// Получить пользователя по ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<User?> GetByIdAsync(int id)
     {
         return await _userRepository.GetByIdAsync(id);
     }
 
+    /// <summary>
+    /// Получить пользователя по юзернейму
+    /// </summary>
+    /// <param name="username"></param>
+    /// <returns></returns>
     public async Task<User?> GetByUsernameAsync(string username)
     {
         return await _userRepository.GetByUsernameAsync(username);
     }
 
+    /// <summary>
+    /// Получить всех пользователей
+    /// </summary>
+    /// <returns></returns>
     public async Task<IEnumerable<User>> GetAllAsync()
     {
         return await _userRepository.GetAllAsync();
     }
 
+    /// <summary>
+    /// Регистрация
+    /// </summary>
+    /// <param name="username"></param>
+    /// <param name="password"></param>
+    /// <returns></returns>
     public async Task<string> RegisterAsync(string username, string password)
     {
         var existing = await _userRepository.GetByUsernameAsync(username);
@@ -51,7 +71,14 @@ public class UserService : IUserService
         await _userRepository.AddAsync(user);
         return TokenGeneration.GenerateToken(user.Id);
     }
-
+    
+    /// <summary>
+    /// Авторизация
+    /// </summary>
+    /// <param name="username"></param>
+    /// <param name="password"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<string> LoginAsync(string username, string password)
     {
         var attempt = await _loginAttemptRepository.GetByUsernameAsync(username);
@@ -59,8 +86,6 @@ public class UserService : IUserService
             throw new Exception("Account temporarily locked due to too many failed login attempts. Try again later.");
 
         var user = await _userRepository.GetByUsernameAsync(username);
-        //if (user == null)
-        //    return string.Empty;
 
         if (user == null || !PasswordHasher.VerifyPassword(password, user.PasswordHash))
         {
@@ -86,16 +111,14 @@ public class UserService : IUserService
         if (attempt != null)
             await _loginAttemptRepository.ResetAttemptsAsync(username);
 
-        // возвращаем токен
         return TokenGeneration.GenerateToken(user.Id);
-
-       
-        //if (!PasswordHasher.VerifyPassword(password, user.PasswordHash))
-        //    return string.Empty;
-
-        //return TokenGeneration.GenerateToken(user.Id);
     }
 
+    /// <summary>
+    /// Удалить пользователя
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteAsync(int id)
     {
         var user = await _userRepository.GetByIdAsync(id);
@@ -106,6 +129,11 @@ public class UserService : IUserService
         return true;
     }
 
+    /// <summary>
+    /// Обновить данные пользователя
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
     public async Task<bool> UpdateAsync(User user)
     {
         var existingUser = await _userRepository.GetByIdAsync(user.Id);

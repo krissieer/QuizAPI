@@ -15,16 +15,32 @@ public class OptionService : IOptionService
         _questionRepository = questionRepository;
     }
 
+    /// <summary>
+    /// Получить варинат ответа по ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Option?> GetByIdAsync(int id)
     {
         return await _optionRepository.GetByIdAsync(id);
     }
 
+    /// <summary>
+    /// Получить варианты ответов конкретного вопроса
+    /// </summary>
+    /// <param name="questionId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Option>> GetByQuestionAsync(int questionId)
     {
         return await _optionRepository.GetOptionsByQuestionAsync(questionId);
     }
 
+    /// <summary>
+    /// Создать вариант ответа
+    /// </summary>
+    /// <param name="option"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<Option> CreateAsync(Option option)
     {
         var question = await _questionRepository.GetByIdAsync(option.QuestionId);
@@ -35,12 +51,22 @@ public class OptionService : IOptionService
         return option;
     }
 
+    /// <summary>
+    /// Добавить сразу несколько вариантов ответа
+    /// </summary>
+    /// <param name="options"></param>
+    /// <returns></returns>
     public async Task AddRangeAsync(IEnumerable<Option> options)
     {
-        // Здесь можно добавить проверку, что все опции принадлежат существующему Question
         await _optionRepository.AddRangeAsync(options);
     }
 
+    /// <summary>
+    /// Обновить вариант ответа
+    /// </summary>
+    /// <param name="option"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<bool> UpdateAsync(Option option)
     {
         var existing = await _optionRepository.GetByIdAsync(option.Id);
@@ -59,6 +85,11 @@ public class OptionService : IOptionService
         return true;
     }
 
+    /// <summary>
+    /// Удалить вариант ответа
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteAsync(int id)
     {
         var existing = await _optionRepository.GetByIdAsync(id);

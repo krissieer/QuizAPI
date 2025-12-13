@@ -206,26 +206,18 @@ public class QuizController : ControllerBase
     public async Task<IActionResult> ConnectByCode(string code)
     {
         if (string.IsNullOrEmpty(code) || code.Length != 5)
-        {
             return BadRequest("Access code must be 5 characters long.");
-        }
-        
-        // 1. Поиск викторины по коду
+
+        // поиск викторины по коду
         var quiz = await _quizService.GetByAccessKeyAsync(code); 
         
         if (quiz == null)
-        {
-            // Используем NotFound, но с общим сообщением, чтобы не раскрывать информацию о существовании кода
-            return NotFound("Quiz not found or code is invalid."); 
-        }
-        
-        // 2. Дополнительная проверка: должна быть приватной
+            return NotFound("Quiz not found or code is invalid.");
+
+        // викторина должна быть приватной
         if (quiz.isPublic)
-        {
-            return BadRequest("This quiz is public and does not require an access code."); 
-        }
+            return BadRequest("This quiz is public and does not require an access code.");
         
-        // 3. Доступ разрешен: возвращаем ID и основные данные, чтобы фронтенд мог начать викторину
         return Ok(new QuizAccessInfoDto
         {
             QuizId = quiz.Id,
@@ -313,27 +305,23 @@ public class QuizController : ControllerBase
     [HttpGet("by-category/{categoryName}")]
     public async Task<IActionResult> GetByCategory(string categoryName)
     {
-        // 1. Попытка распарсить строку в наш Enum CategoryType
+        // попытка распарсить строку в Enum CategoryType
         if (!Enum.TryParse(categoryName, true, out CategoryType category))
         {
             return BadRequest($"Invalid category name: {categoryName}. Available categories: {string.Join(", ", Enum.GetNames(typeof(CategoryType)))}");
         }
 
-        // 2. Вызов сервиса
         var quizzes = await _quizService.GetQuizzesByCategoryAsync(category);
 
         if (!quizzes.Any())
-        {
             return NotFound($"No public quizzes found in category {categoryName}.");
-        }
 
-        // 3. Маппинг в DTO
         var result = quizzes.Select(q => new QuizDto
         {
             Id = q.Id,
             Title = q.Title,
             Description = q.Description,
-            Category = q.Category ?? CategoryType.Other, // Теперь это Enum
+            Category = q.Category ?? CategoryType.Other, 
             IsPublic = q.isPublic,
             AuthorId = q.AuthorId,
             TimeLimit = q.TimeLimit,

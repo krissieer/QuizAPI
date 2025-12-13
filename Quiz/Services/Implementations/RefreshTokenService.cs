@@ -13,6 +13,11 @@ public class RefreshTokenService : IRefreshTokenService
         _tokenRepository = tokenRepository;
     }
 
+    /// <summary>
+    /// Создать refresh токен
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     public async Task<string> CreateRefreshToken(int userId)
     {
         var token = Guid.NewGuid().ToString();
@@ -29,6 +34,11 @@ public class RefreshTokenService : IRefreshTokenService
         return token;
     }
 
+    /// <summary>
+    /// Обновить токен
+    /// </summary>
+    /// <param name="refreshToken"></param>
+    /// <returns></returns>
     public async Task<string?> RefreshTokenAsync(string refreshToken)
     {
         var token = await _tokenRepository.GetAsync(refreshToken);
@@ -39,6 +49,11 @@ public class RefreshTokenService : IRefreshTokenService
         return TokenGeneration.GenerateToken(token.UserId);
     }
 
+    /// <summary>
+    /// Разлогиниться
+    /// </summary>
+    /// <param name="refreshToken"></param>
+    /// <returns></returns>
     public async Task LogoutAsync(string refreshToken)
     {
         await _tokenRepository.RevokeAsync(refreshToken);

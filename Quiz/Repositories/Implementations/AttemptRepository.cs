@@ -13,12 +13,22 @@ public class AttemptRepository : IAttemptRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Получить попытку
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Attempt?> GetByIdAsync(int id)
     {
         return await _context.Attempts
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    /// <summary>
+    /// Получить попытку с подробностями
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Attempt?> GetByIdWithDetailsAsync(int id)
     {
         return await _context.Attempts
@@ -33,18 +43,33 @@ public class AttemptRepository : IAttemptRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    /// <summary>
+    /// Добавить попытку в БД
+    /// </summary>
+    /// <param name="attempt"></param>
+    /// <returns></returns>
     public async Task AddAsync(Attempt attempt)
     {
         await _context.Attempts.AddAsync(attempt);
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Обновить попытку
+    /// </summary>
+    /// <param name="attempt"></param>
+    /// <returns></returns>
     public async Task UpdateAsync(Attempt attempt)
     {
         _context.Attempts.Update(attempt);
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Удалить попытку
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task DeleteAsync(int id)
     {
         var attempt = await _context.Attempts.FindAsync(id);
@@ -55,6 +80,11 @@ public class AttemptRepository : IAttemptRepository
         }
     }
 
+    /// <summary>
+    /// Получить попвтки пользователя
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetAttemptsByUserAsync(int userId)
     {
         return await _context.Attempts
@@ -64,6 +94,11 @@ public class AttemptRepository : IAttemptRepository
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Получить попытки прохождения квиза
+    /// </summary>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetAttemptsByQuizAsync(int quizId)
     {
         return await _context.Attempts
@@ -74,7 +109,12 @@ public class AttemptRepository : IAttemptRepository
             .ToListAsync();
     }
 
-    // Получить попытки конкретного пользователя в конкретной викторине
+    /// <summary>
+    /// Получить попытки конкретного пользователя в конкретной викторине
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetAttemptsByUserIdAndQuizIdAsync(int userId, int quizId)
     {
         return await _context.Attempts
@@ -84,7 +124,12 @@ public class AttemptRepository : IAttemptRepository
             .ToListAsync();
     }
 
-    // Получить попытки конкретного гостя в конкретной викторине
+    /// <summary>
+    /// Получить попытки конкретного гостя в конкретной викторине
+    /// </summary>
+    /// <param name="guestSessionId"></param>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetAttemptsByGuestIdAndQuizIdAsync(string guestSessionId, int quizId)
     {
         return await _context.Attempts

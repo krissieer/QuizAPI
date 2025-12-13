@@ -13,44 +13,70 @@ public class QuizRepository : IQuizRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Получить квиз по ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Models.Quiz?> GetByIdAsync(int id)
     {
         return await _context.Quizzes
             .FirstOrDefaultAsync(q => q.Id == id);
     }
 
+    /// <summary>
+    /// Получить публичные квизы
+    /// </summary>
+    /// <returns></returns>
     public async Task<IEnumerable<Models.Quiz>> GetPublicQuizzesAsync()
     {
-        // Добавим Author и Category для отображения в списке
         return await _context.Quizzes
             .Where(q => q.isPublic)
             .Include(q => q.Author)
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Получить квизы по автору
+    /// </summary>
+    /// <param name="authorId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Models.Quiz>> GetQuizzesByAuthorAsync(int authorId)
     {
-        // Category для отображения
         return await _context.Quizzes
             .Where(q => q.AuthorId == authorId)
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Добавить квиз
+    /// </summary>
+    /// <param name="quiz"></param>
+    /// <returns></returns>
     public async Task AddAsync(Models.Quiz quiz)
     {
         await _context.Quizzes.AddAsync(quiz);
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Обновить квиз
+    /// </summary>
+    /// <param name="quiz"></param>
+    /// <returns></returns>
     public async Task UpdateAsync(Models.Quiz quiz)
     {
         _context.Quizzes.Update(quiz);
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Получить викторину с деталями: автор, категория, вопросы, варианты и попытки.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Models.Quiz?> GetByIdWithDetailsAsync(int id)
     {
-        // Возвращает викторину со всеми деталями: автор, категория, вопросы, варианты и попытки.
         return await _context.Quizzes
             .Include(q => q.Author)
             .Include(q => q.Questions)
@@ -59,15 +85,24 @@ public class QuizRepository : IQuizRepository
             .FirstOrDefaultAsync(q => q.Id == id);
     }
 
+    /// <summary>
+    /// Получить приватный квиз 
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
     public async Task<Models.Quiz?> GetByAccessKeyAsync(string key)
     {
-        // Ищем викторину по приватному ключу и сразу загружаем вопросы и опции, необходимые для подключения.
         return await _context.Quizzes
             .Include(q => q.Questions)
                 .ThenInclude(q => q.Options)
-            .FirstOrDefaultAsync(q => q.PrivateAccessKey == key.ToUpper()); // Сохраняем и ищем в верхнем регистре
+            .FirstOrDefaultAsync(q => q.PrivateAccessKey == key.ToUpper()); 
     }
 
+    /// <summary>
+    /// Получить квизы опредленной категории
+    /// </summary>
+    /// <param name="category"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Models.Quiz>> GetQuizzesByCategoryAsync(CategoryType category)
     {
         var query = _context.Quizzes.Where(q => q.isPublic);
@@ -86,6 +121,11 @@ public class QuizRepository : IQuizRepository
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Удалить квиз
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task DeleteAsync(int id)
     {
         var quiz = await _context.Quizzes.FirstOrDefaultAsync(q => q.Id == id);
@@ -97,10 +137,15 @@ public class QuizRepository : IQuizRepository
         }
     }
 
+    /// <summary>
+    /// Получить квиз с вопросами
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Models.Quiz?> GetByIdWithQuestionsAsync(int id)
     {
         return await _context.Quizzes
-            .Include(q => q.Questions) // <-- Включаем вопросы
+            .Include(q => q.Questions) 
             .FirstOrDefaultAsync(q => q.Id == id);
     }
 }

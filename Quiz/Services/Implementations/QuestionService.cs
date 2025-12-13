@@ -21,12 +21,31 @@ public class QuestionService : IQuestionService
         _optionRepository = optionRepository;
     }
 
+    /// <summary>
+    /// Получить вопрос по ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Question?> GetByIdAsync(int id)
         => await _questionRepository.GetByIdWithOptionsAsync(id);
 
+    /// <summary>
+    /// Получить вопросы квиза
+    /// </summary>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Question>> GetByQuizAsync(int quizId)
         => await _questionRepository.GetQuestionsWithOptionsByQuizAsync(quizId);
 
+    /// <summary>
+    /// Создать вопрос
+    /// </summary>
+    /// <param name="question"></param>
+    /// <param name="optionTexts"></param>
+    /// <param name="isCorrectFlags"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="KeyNotFoundException"></exception>
     public async Task<Question> CreateAsync(Question question, List<string> optionTexts, List<bool> isCorrectFlags)
     {
         if (optionTexts.Count != isCorrectFlags.Count)
@@ -57,6 +76,15 @@ public class QuestionService : IQuestionService
         return question;
     }
 
+    /// <summary>
+    /// Изменить вопрос
+    /// </summary>
+    /// <param name="question"></param>
+    /// <param name="optionTexts"></param>
+    /// <param name="isCorrectFlags"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    /// <exception cref="ArgumentException"></exception>
     public async Task<bool> UpdateAsync(Question question, List<string>? optionTexts = null, List<bool>? isCorrectFlags = null)
     {
         var existing = await _questionRepository.GetByIdWithOptionsAsync(question.Id)
@@ -96,6 +124,11 @@ public class QuestionService : IQuestionService
         return true;
     }
 
+    /// <summary>
+    /// Удалить вопрос
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteAsync(int id)
     {
         var existing = await _questionRepository.GetByIdAsync(id);
@@ -106,18 +139,22 @@ public class QuestionService : IQuestionService
         return true;
     }
     
+    /// <summary>
+    /// Валидация вариантов ответов
+    /// </summary>
+    /// <param name="question"></param>
+    /// <param name="isCorrectFlags"></param>
+    /// <exception cref="InvalidOperationException"></exception>
     private void ValidateOptions(Question question, List<bool> isCorrectFlags)
     {
-        // 1. Проверка минимального количества опций
+        // проверка минимального количества опций
         if (isCorrectFlags.Count < 2)
-        {
             throw new InvalidOperationException("Question must have at least two options.");
-        }
 
-        // Считаем количество правильных опций
+        // считаем количество правильных опций
         int correctCount = isCorrectFlags.Count(isCorrect => isCorrect);
 
-        // 2. Валидация в зависимости от типа вопроса
+        // валидация в зависимости от типа вопроса
         if (question.Type == QuestionType.Single)
         {
             // Для одиночного выбора должно быть ровно 1 правильная опция

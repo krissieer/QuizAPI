@@ -30,6 +30,7 @@ public class UserController : ControllerBase
         _refreshTokenService = refreshTokenService;
     }
 
+    // GET: api/user
     [HttpGet]
     public async Task<IActionResult> GetAllUsers()
     {
@@ -48,6 +49,7 @@ public class UserController : ControllerBase
 
     }
 
+    // GET: api/user/{id}
     [HttpGet("{id}")] 
     public async Task<IActionResult> GetById(int id) 
     { 
@@ -65,6 +67,7 @@ public class UserController : ControllerBase
         return Ok(result);
     }
 
+    // GET: api/user/"by-username/{username}
     [HttpGet("by-username/{username}")]
     public async Task<IActionResult> GetByUsername(string username)
     {
@@ -184,8 +187,9 @@ public class UserController : ControllerBase
             if (!success)
                 return StatusCode(500, "Failed to delete user due to server error.");
             return Ok("Deleted");
-        }
+    }
 
+    // POST: api/user/register
     [HttpPost("register")]
     public async Task<IActionResult> AddNewUser([FromBody] AuthDto dto)
     {
@@ -237,6 +241,7 @@ public class UserController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ex.Message); }
     }
 
+    // POST: api/user/refresh
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh()
     {
@@ -252,6 +257,7 @@ public class UserController : ControllerBase
         return Ok(new { Token = accessToken });
     }
 
+    // POST: api/user/logout
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {

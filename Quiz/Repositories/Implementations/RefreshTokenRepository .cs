@@ -13,17 +13,32 @@ public class RefreshTokenRepository : IRefreshTokenRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Добавить refresh токен
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
     public async Task AddAsync(RefreshToken token)
     {
         _context.RefreshTokens.Add(token);
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Получить токен
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
     public async Task<RefreshToken?> GetAsync(string token)
     {
         return await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == token);
     }
 
+    /// <summary>
+    /// Сбросить токен
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
     public async Task RevokeAsync(string token)
     {
         var entity = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == token);

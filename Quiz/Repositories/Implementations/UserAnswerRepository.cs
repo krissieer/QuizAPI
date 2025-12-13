@@ -13,6 +13,11 @@ public class UserAnswerRepository : IUserAnswerRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Получить ответ пользователя
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<UserAnswer?> GetByIdAsync(int id)
     {
         return await _context.UserAnswers
@@ -22,18 +27,33 @@ public class UserAnswerRepository : IUserAnswerRepository
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
+    /// <summary>
+    /// Добавить ответ
+    /// </summary>
+    /// <param name="answer"></param>
+    /// <returns></returns>
     public async Task AddAsync(UserAnswer answer)
     {
         await _context.UserAnswers.AddAsync(answer);
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Обновить ответ
+    /// </summary>
+    /// <param name="answer"></param>
+    /// <returns></returns>
     public async Task UpdateAsync(UserAnswer answer)
     {
         _context.UserAnswers.Update(answer);
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Удалить ответ
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task DeleteAsync(int id)
     {
         var answer = await _context.UserAnswers.FirstOrDefaultAsync(a => a.Id == id);
@@ -45,6 +65,11 @@ public class UserAnswerRepository : IUserAnswerRepository
         }
     }
 
+    /// <summary>
+    /// Получить ответы попытки
+    /// </summary>
+    /// <param name="attemptId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<UserAnswer>> GetAnswersByAttemptAsync(int attemptId)
     {
         return await _context.UserAnswers

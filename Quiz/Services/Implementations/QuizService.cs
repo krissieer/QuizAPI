@@ -16,6 +16,11 @@ public class QuizService : IQuizService
         _userRepository = userRepository;
     }
 
+    /// <summary>
+    /// Генерация кода доступа к приватносу квизу
+    /// </summary>
+    /// <param name="length"></param>
+    /// <returns></returns>
     private string GenerateUniqueCode(int length = 5)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -25,34 +30,62 @@ public class QuizService : IQuizService
           .Select(s => s[random.Next(s.Length)]).ToArray());
     }
 
+    /// <summary>
+    /// Получить квиз по ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Models.Quiz?> GetByIdAsync(int id)
     {
         return await _quizRepository.GetByIdAsync(id);
     }
 
+    /// <summary>
+    /// Получить квиз с подробностями
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Models.Quiz?> GetByIdWithDetailsAsync(int id)
     {
         return await _quizRepository.GetByIdWithDetailsAsync(id);
     }
 
+    /// <summary>
+    /// Получить все публичные квизы
+    /// </summary>
+    /// <returns></returns>
     public async Task<IEnumerable<Models.Quiz>> GetAllPublicAsync()
     {
         return await _quizRepository.GetPublicQuizzesAsync();
     }
 
+    /// <summary>
+    /// ПОлучить квиз по автору
+    /// </summary>
+    /// <param name="authorId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Models.Quiz>> GetByAuthorAsync(int authorId)
     {
         return await _quizRepository.GetQuizzesByAuthorAsync(authorId);
     }
 
+    /// <summary>
+    /// ПОлучить приватный квиз по коду
+    /// </summary>
+    /// <param name="code"></param>
+    /// <returns></returns>
     public async Task<Models.Quiz?> GetByAccessKeyAsync(string code)
     {
         // Передаем код в верхнем регистре, чтобы гарантировать совпадение с сохраненным
         return await _quizRepository.GetByAccessKeyAsync(code.ToUpperInvariant());
     }
 
-
-
+    /// <summary>
+    /// Создать квиз
+    /// </summary>
+    /// <param name="quiz"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<Models.Quiz> CreateAsync(Models.Quiz quiz)
     {
         var author = await _userRepository.GetByIdAsync(quiz.AuthorId);
@@ -83,6 +116,12 @@ public class QuizService : IQuizService
         return quiz;
     }
 
+    /// <summary>
+    /// Изменить квиз
+    /// </summary>
+    /// <param name="quiz"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<bool> UpdateAsync(Models.Quiz quiz)
     {
         var existing = await _quizRepository.GetByIdAsync(quiz.Id);
@@ -102,6 +141,11 @@ public class QuizService : IQuizService
         return true;
     }
 
+    /// <summary>
+    /// Удалить квиз
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteAsync(int id)
     {
         var existing = await _quizRepository.GetByIdAsync(id);
@@ -112,6 +156,11 @@ public class QuizService : IQuizService
         return true;
     }
     
+    /// <summary>
+    /// Получить квизв опредленной категории
+    /// </summary>
+    /// <param name="category"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Models.Quiz>> GetQuizzesByCategoryAsync(CategoryType category)
     {
         return await _quizRepository.GetQuizzesByCategoryAsync(category);

@@ -11,7 +11,6 @@ public class AttemptService : IAttemptService
     private readonly IAttemptRepository _attemptRepository;
     private readonly IQuizRepository _quizRepository;
     private readonly IQuestionRepository _questionRepository;
-    private readonly IOptionRepository _optionRepository;
     private readonly IUserAnswerRepository _userAnswerRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -19,33 +18,65 @@ public class AttemptService : IAttemptService
         IAttemptRepository attemptRepository,
         IQuizRepository quizRepository,
         IQuestionRepository questionRepository,
-        IOptionRepository optionRepository,
         IUserAnswerRepository userAnswerRepository,
         IHttpContextAccessor httpContextAccessor)
     {
         _attemptRepository = attemptRepository;
         _quizRepository = quizRepository;
         _questionRepository = questionRepository;
-        _optionRepository = optionRepository;
         _userAnswerRepository = userAnswerRepository;
         _httpContextAccessor = httpContextAccessor;
     }
 
+    /// <summary>
+    /// Получить попытку по ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Attempt?> GetByIdAsync(int id)
         => await _attemptRepository.GetByIdWithDetailsAsync(id);
 
+    /// <summary>
+    /// Получить попытки пользователя
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetByUserIdAsync(int userId)
         => await _attemptRepository.GetAttemptsByUserAsync(userId);
 
+    /// <summary>
+    /// Получить попытки прохождения квиза
+    /// </summary>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetByQuizIdAsync(int quizId)
         => await _attemptRepository.GetAttemptsByQuizAsync(quizId);
     
+    /// <summary>
+    /// Получить попытки по пользователю и квизу
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetAttemptsByUserIdAndQuizIdAsync(int userId, int quizId)
         => await _attemptRepository.GetAttemptsByUserIdAndQuizIdAsync(userId, quizId);
 
+    /// <summary>
+    /// Получить попытки квиза, пройденного гостем
+    /// </summary>
+    /// <param name="guestSessionId"></param>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Attempt>> GetAttemptsByGuestIdAndQuizIdAsync(string guestSessionId, int quizId)
         => await _attemptRepository.GetAttemptsByGuestIdAndQuizIdAsync(guestSessionId, quizId);
 
+    /// <summary>
+    /// Начать попытку прохождения квиза
+    /// </summary>
+    /// <param name="quizId"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     public async Task<Attempt> StartAttemptAsync(int quizId)
     {
         var quiz = await _quizRepository.GetByIdWithQuestionsAsync(quizId)
@@ -74,6 +105,14 @@ public class AttemptService : IAttemptService
         return attempt;
     }
 
+    /// <summary>
+    /// Закончить попытку
+    /// </summary>
+    /// <param name="attemptId"></param>
+    /// <param name="answerDtos"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     public async Task<Attempt> FinishAttemptAsync(int attemptId, IEnumerable<AnswerFinishDto> answerDtos)
     {
         var attempt = await _attemptRepository.GetByIdAsync(attemptId)
@@ -130,6 +169,11 @@ public class AttemptService : IAttemptService
         return attempt;
     }
 
+    /// <summary>
+    /// Удалить попытку
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteAsync(int id)
     {
         await _attemptRepository.DeleteAsync(id);

@@ -152,7 +152,6 @@ public class Program
         app.UseHttpsRedirection();
         app.UseRouting();
 
-        //app.UseCors("Frontend");
         app.UseCors();
 
         app.UseMiddleware<SecurityHeadersMiddleware>();        

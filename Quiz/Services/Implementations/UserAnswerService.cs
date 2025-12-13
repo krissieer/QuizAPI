@@ -67,6 +67,11 @@ public class UserAnswerService : IUserAnswerService
         return answer;
     }
 
+    /// <summary>
+    /// Обновить ответ
+    /// </summary>
+    /// <param name="answer"></param>
+    /// <returns></returns>
     public async Task<bool> UpdateAsync(UserAnswer answer)
     {
         var exists = await _useranswerRepository.GetByIdAsync(answer.Id);
@@ -76,6 +81,11 @@ public class UserAnswerService : IUserAnswerService
         return true;
     }
 
+    /// <summary>
+    /// Удалить ответ
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteAsync(int id)
     {
         var answer = await _useranswerRepository.GetByIdAsync(id);

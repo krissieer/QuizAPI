@@ -19,13 +19,13 @@ public class CategoryController : ControllerBase
     [HttpGet]
     public IActionResult GetAllCategories()
     {
-        // Получаем все значения из ENUM
+        // значения из ENUM
         var categories = Enum.GetValues(typeof(CategoryType))
             .Cast<CategoryType>()
             .Select(type => new CategoryTypeDto
             {
                 CategoryType = type,
-                Name = type.ToString() // Преобразуем enum в строку для Name
+                Name = type.ToString() // преобразуем enum в строку для Name
             })
             .ToList();
 
