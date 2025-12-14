@@ -7,7 +7,16 @@ public class AuthOptions
 {
     public const string ISSUER = "MyAuthServer";
     public const string AUDIENCE = "MyAuthClient";
-    const string KEY = "mysupersecret_secretsecretsecretkey!123";
-    public static SymmetricSecurityKey GetSymmetricSecurityKey() =>
-        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(KEY));
+
+    public static SymmetricSecurityKey GetSymmetricSecurityKey()
+    {
+        var key = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+        if (string.IsNullOrEmpty(key))
+            throw new InvalidOperationException("JWT_SECRET_KEY environment variable is not set.");
+        return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+    }
+
+    //const string KEY = "mysupersecret_secretsecretsecretkey!123";
+    //public static SymmetricSecurityKey GetSymmetricSecurityKey() =>
+    //    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(KEY));
 }

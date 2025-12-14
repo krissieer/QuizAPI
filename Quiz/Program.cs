@@ -47,10 +47,17 @@ public class Program
             });
         });
 
+        //builder.Services.AddDbContext<QuizDBContext>(options =>
+        //{
+        //    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+        //});
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        if (string.IsNullOrEmpty(connectionString))
+            throw new InvalidOperationException("DefaultConnection environment variable is not set.");
+
         builder.Services.AddDbContext<QuizDBContext>(options =>
-        {
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-        });
+            options.UseNpgsql(connectionString));
+
 
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IQuizRepository, QuizRepository>();
