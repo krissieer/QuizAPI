@@ -37,6 +37,7 @@ public class QuestionController : ControllerBase
             {
                 Id = o.Id,
                 Text = o.Text,
+                IsCorrect = o.IsCorrect,
             }).ToList()
         };
     }
@@ -164,7 +165,8 @@ public class QuestionController : ControllerBase
         var result = new OptionDto
         {
             Id = option.Id,
-            Text = option.Text
+            Text = option.Text,
+            IsCorrect = option.IsCorrect
         };
 
         return Ok(result);
@@ -181,7 +183,8 @@ public class QuestionController : ControllerBase
         var result = options.Select(o => new OptionDto
         {
             Id = o.Id,
-            Text = o.Text
+            Text = o.Text,
+            IsCorrect = o.IsCorrect
         });
 
         return Ok(result);

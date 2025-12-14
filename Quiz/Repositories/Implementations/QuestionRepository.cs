@@ -20,7 +20,10 @@ public class QuestionRepository : IQuestionRepository
     /// <returns></returns>
     public async Task<Question?> GetByIdAsync(int id)
     {
-        return await _context.Questions.FindAsync(id);
+        return await _context.Questions
+            .Include(q => q.Quiz)
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(q => q.Id == id);
     }
 
     /// <summary>
