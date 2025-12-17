@@ -197,7 +197,10 @@ public class AttemptController : ControllerBase
             UserName = a.User?.Username ?? "Guest",
             Score = a.Score,
             TimeSpent = a.TimeSpent,
-            CompletedAt = a.CompletedAt
+            CompletedAt = a.CompletedAt,
+            UserId = a.UserId,
+            GuestSessionId = a.UserId == null ? a.GuestSessionId : null,
+            AttemptId = a.Id
         });
 
         return Ok(result);

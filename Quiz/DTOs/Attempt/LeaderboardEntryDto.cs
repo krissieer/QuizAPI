@@ -6,4 +6,7 @@ public class LeaderboardEntryDto
     public int Score { get; set; }
     public TimeSpan TimeSpent { get; set; }
     public DateTime CompletedAt { get; set; }
+    public int? UserId { get; set; }
+    public string? GuestSessionId { get; set; }
+    public int AttemptId { get; set; }
 }
