@@ -333,6 +333,7 @@ public class QuizController : ControllerBase
             AuthorId = q.AuthorId,
             TimeLimit = q.TimeLimit,
             CreatedAt = q.CreatedAt,
+            PrivateAccessKey = q.PrivateAccessKey,
             IsDeleted = q.IsDeleted
         });
 
