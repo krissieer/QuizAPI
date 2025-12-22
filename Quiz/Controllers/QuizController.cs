@@ -99,6 +99,36 @@ public class QuizController : ControllerBase
         return Ok(result);
     }
 
+    // GET: api/quiz/access/{accessKey}
+    [HttpGet("access/{accessKey}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetByAccessKey(string accessKey)
+    {
+        if (string.IsNullOrEmpty(accessKey))
+            return BadRequest("Access key is required.");
+
+        var quiz = await _quizService.GetByAccessKeyAsync(accessKey.ToUpperInvariant());
+        
+        if (quiz == null)
+            return NotFound("Quiz not found or invalid access key.");
+
+        var result = new QuizDto
+        {
+            Id = quiz.Id,
+            Title = quiz.Title,
+            Description = quiz.Description,
+            Category = quiz.Category ?? CategoryType.Other,
+            IsPublic = quiz.isPublic,
+            AuthorId = quiz.AuthorId,
+            TimeLimit = quiz.TimeLimit,
+            CreatedAt = quiz.CreatedAt,
+            PrivateAccessKey = quiz.PrivateAccessKey,
+            IsDeleted = quiz.IsDeleted
+        };
+
+        return Ok(result);
+    }
+
     // GET: api/quiz/{quizId}/questions
     [HttpGet("{quizId}/questions")]
     public async Task<IActionResult> GetQuestions(int quizId, [FromQuery] string? accessKey)
