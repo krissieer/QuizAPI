@@ -25,6 +25,8 @@ public class Program
 
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
+                Name = "Authorization",
+                In = ParameterLocation.Header,
                 Description = "Enter token",
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
@@ -81,6 +83,7 @@ public class Program
                  ValidateAudience = true,
                  ValidAudience = AuthOptions.AUDIENCE,
                  ValidateLifetime = true,
+                 ClockSkew = TimeSpan.Zero,
                  IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
                  ValidateIssuerSigningKey = true,
              };
